@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TSM CRM — Propostas Comerciais</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+  /* Sidebar links — sem @apply (não funciona com Tailwind CDN) */
+  .sidebar-link{
+    display:flex;align-items:center;gap:.75rem;
+    padding:.5rem .75rem;margin:.1rem .5rem;
+    border-radius:.5rem;font-size:.875rem;font-weight:500;
+    color:#9ca3af;cursor:pointer;text-decoration:none;
+    transition:background .15s, color .15s;
+    white-space:nowrap;
+  }
+  .sidebar-link:hover{background:#1f2937;color:#fff}
+  .sidebar-link.active{background:#2563eb;color:#fff}
+  .sidebar-link svg{flex-shrink:0;width:1rem;height:1rem}
+
+  /* Cards */
+  .card{background:#fff;border-radius:.75rem;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+
+  /* Botões */
+  .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;border-radius:.5rem;font-size:.875rem;font-weight:500;cursor:pointer;transition:background .15s;border:none}
+  .btn-primary{background:#2563eb;color:#fff} .btn-primary:hover{background:#1d4ed8}
+  .btn-secondary{background:#fff;color:#374151;border:1px solid #d1d5db} .btn-secondary:hover{background:#f9fafb}
+  .btn-danger{background:#dc2626;color:#fff} .btn-danger:hover{background:#b91c1c}
+  .btn-sm{padding:.3rem .7rem;font-size:.8rem}
+
+  /* Inputs */
+  .inp{display:block;width:100%;border:1px solid #d1d5db;border-radius:.5rem;padding:.45rem .75rem;font-size:.875rem;color:#111827;outline:none;box-sizing:border-box}
+  .inp:focus{border-color:#2563eb;box-shadow:0 0 0 2px #bfdbfe}
+  select.inp{background:#fff}
+
+  /* Formulários */
+  .lbl{display:block;font-size:.8rem;font-weight:500;color:#374151;margin-bottom:.25rem}
+
+  /* Badges */
+  .badge{display:inline-flex;align-items:center;padding:.15rem .65rem;border-radius:9999px;font-size:.72rem;font-weight:600}
+
+  /* Tabelas */
+  .th{padding:.6rem 1rem;text-align:left;font-size:.72rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;background:#f9fafb;white-space:nowrap}
+  .td{padding:.65rem 1rem;font-size:.85rem;color:#111827;border-top:1px solid #f3f4f6}
+  tr:hover .td{background:#f9fafb}
+
+  /* Modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem}
+  .modal{background:#fff;border-radius:1rem;width:100%;max-width:700px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+
+  /* Layout base */
+  html,body{height:100%;margin:0;padding:0}
+  .layout{display:flex;height:100vh;overflow:hidden}
+  .sidebar{width:220px;min-width:220px;background:#111827;display:flex;flex-direction:column;overflow:hidden}
+  .main-area{flex:1;overflow-y:auto;background:#f9fafb}
+  .content-wrap{padding:1.5rem;max-width:1280px;margin:0 auto}
+
+  /* Seção label no nav */
+  .nav-section{padding:.75rem 1rem .25rem;font-size:.7rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em}
+
+  /* Tela de login */
+  #login-screen{
+    position:fixed;inset:0;background:#f1f5f9;
+    display:flex;align-items:center;justify-content:center;
+    z-index:100;
+  }
+  #login-screen.hidden{display:none}
+  .login-card{
+    background:#fff;border-radius:1.25rem;padding:2.5rem;
+    width:100%;max-width:400px;
+    box-shadow:0 8px 40px rgba(0,0,0,.12);
+  }
+  #app-wrap{display:none}
+  #app-wrap.visible{display:flex}
+
+  /* Print */
+  @media print{
+    .sidebar,.no-print{display:none!important}
+    .main-area{margin:0!important;padding:0!important}
+    .card{box-shadow:none;border:none}
+  }
+</style>
+</head>
+<body style="font-family:Inter,system-ui,sans-serif;margin:0;padding:0;background:#f9fafb;color:#111827">
+
+<!-- ═══════════════════ TELA DE LOGIN ═══════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <!-- Logo -->
+    <div style="display:flex;align-items:center;gap:.875rem;margin-bottom:2rem">
+      <div style="width:3rem;height:3rem;background:#2563eb;border-radius:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="color:#fff;font-weight:900;font-size:.875rem;letter-spacing:.05em">TSM</span>
+      </div>
+      <div>
+        <p style="font-size:1.25rem;font-weight:700;color:#111827;margin:0">TSM CRM</p>
+        <p style="font-size:.8rem;color:#6b7280;margin:0">Propostas Comerciais</p>
+      </div>
+    </div>
+
+    <h2 style="font-size:1.125rem;font-weight:600;color:#111827;margin:0 0 1.5rem">Acesse sua conta</h2>
+
+    <div id="login-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:.85rem;padding:.6rem .9rem;border-radius:.5rem;margin-bottom:1rem"></div>
+
+    <div style="margin-bottom:1rem">
+      <label class="lbl">E-mail</label>
+      <input id="login-email" class="inp" type="email" placeholder="seu@email.com" autocomplete="email"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-senha').focus()">
+    </div>
+    <div style="margin-bottom:1.5rem">
+      <label class="lbl">Senha</label>
+      <input id="login-senha" class="inp" type="password" placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+
+    <button class="btn btn-primary" onclick="doLogin()" style="width:100%;justify-content:center;padding:.6rem 1rem;font-size:.95rem">
+      Entrar
+    </button>
+
+    <p style="margin-top:1.25rem;font-size:.78rem;color:#9ca3af;text-align:center">
+      Dados salvos localmente no navegador
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP PRINCIPAL ═══════════════════ -->
+<div id="app-wrap" class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <!-- Logo -->
+    <div style="padding:1rem;border-bottom:1px solid #1f2937;display:flex;align-items:center;gap:.75rem;flex-shrink:0">
+      <div style="width:2.25rem;height:2.25rem;background:#2563eb;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="color:#fff;font-weight:900;font-size:.75rem">TSM</span>
+      </div>
+      <div>
+        <p style="color:#fff;font-weight:600;font-size:.875rem;margin:0;line-height:1.2">TSM CRM</p>
+        <p style="color:#6b7280;font-size:.7rem;margin:0">Propostas Comerciais</p>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav style="flex:1;padding:.5rem 0;overflow-y:auto">
+      <a class="sidebar-link" data-page="dashboard">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a class="sidebar-link" data-page="oportunidades">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Oportunidades
+      </a>
+      <a class="sidebar-link" data-page="propostas">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Propostas
+      </a>
+
+      <div class="nav-section">Cadastros</div>
+      <a class="sidebar-link" data-page="clientes">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        Clientes
+      </a>
+      <a class="sidebar-link" data-page="contatos">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Contatos
+      </a>
+      <a class="sidebar-link" data-page="catalogo">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Catálogo
+      </a>
+
+      <div class="nav-section">Configurações</div>
+      <a class="sidebar-link" data-page="usuarios">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Usuários
+      </a>
+      <a class="sidebar-link" data-page="unidades">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Unidades
+      </a>
+    </nav>
+
+    <!-- Footer com usuário logado + logout -->
+    <div style="padding:.75rem;border-top:1px solid #1f2937;flex-shrink:0">
+      <div id="sidebar-user" style="font-size:.75rem;color:#9ca3af;margin-bottom:.5rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+      <button onclick="doLogout()" style="width:100%;background:transparent;border:1px solid #374151;color:#9ca3af;border-radius:.4rem;padding:.3rem .6rem;font-size:.75rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;justify-content:center;transition:background .15s"
+        onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+        <svg style="width:.875rem;height:.875rem;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        Sair
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-area">
+    <div id="content" class="content-wrap"></div>
+  </main>
+</div><!-- /app-wrap -->
+
+<!-- Modal global -->
+<div id="modal-overlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-box" onclick="event.stopPropagation()">
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// AUTH — sessão simples via sessionStorage
+// ═══════════════════════════════════════════════════════
+const AUTH = {
+  SESSION_KEY: 'tsm_session',
+  getSession(){ try{return JSON.parse(sessionStorage.getItem(this.SESSION_KEY)||'null')}catch{return null} },
+  setSession(user){ sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(user)) },
+  clearSession(){ sessionStorage.removeItem(this.SESSION_KEY) },
+  isLogged(){ return !!this.getSession() },
+  currentUser(){ return this.getSession() },
+}
+
+function doLogin(){
+  const email=(document.getElementById('login-email')?.value||'').trim().toLowerCase()
+  const senha=(document.getElementById('login-senha')?.value||'')
+  const errEl=document.getElementById('login-error')
+  errEl.style.display='none'
+
+  if(!email||!senha){ errEl.textContent='Preencha e-mail e senha.'; errEl.style.display='block'; return }
+
+  const users=DB.all('usuarios')
+  const user=users.find(u=>u.email?.toLowerCase()===email && u.ativo!==false)
+  if(!user||user.senha!==senha){
+    errEl.textContent='E-mail ou senha incorretos.'; errEl.style.display='block'; return
+  }
+
+  AUTH.setSession({id:user.id,nome:user.nome,email:user.email,perfil:user.perfil})
+  showApp()
+}
+
+function doLogout(){
+  AUTH.clearSession()
+  showLogin()
+}
+
+function showLogin(){
+  document.getElementById('login-screen').classList.remove('hidden')
+  document.getElementById('app-wrap').classList.remove('visible')
+  document.getElementById('login-email').value=''
+  document.getElementById('login-senha').value=''
+  document.getElementById('login-error').style.display='none'
+}
+
+function showApp(){
+  document.getElementById('login-screen').classList.add('hidden')
+  document.getElementById('app-wrap').classList.add('visible')
+  const u=AUTH.currentUser()
+  const sidebarUser=document.getElementById('sidebar-user')
+  if(sidebarUser && u) sidebarUser.textContent=`${u.nome} · ${u.perfil==='administrador'?'Admin':u.perfil==='vendedor'?'Vendedor':u.perfil==='arquiteto'?'Arquiteto':u.perfil}`
+  navigate('dashboard')
+}
+
+// ═══════════════════════════════════════════════════════
+// DATABASE (localStorage)
+// ═══════════════════════════════════════════════════════
+const DB = {
+  get(k){ try{return JSON.parse(localStorage.getItem('tsm_'+k)||'[]')}catch{return[]} },
+  set(k,v){ localStorage.setItem('tsm_'+k, JSON.stringify(v)) },
+  id(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6) },
+  all(k){ return this.get(k) },
+  find(k,id){ return this.get(k).find(x=>x.id===id) },
+  insert(k,obj){ const d=this.get(k); const r={...obj,id:this.id(),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; d.push(r); this.set(k,d); return r },
+  update(k,id,obj){ const d=this.get(k).map(x=>x.id===id?{...x,...obj,updatedAt:new Date().toISOString()}:x); this.set(k,d); return d.find(x=>x.id===id) },
+  delete(k,id){ this.set(k,this.get(k).filter(x=>x.id!==id)) },
+  nextPropostaNum(){
+    const props=this.get('propostas')
+    const year=new Date().getFullYear().toString().slice(2)
+    const seq=(props.length+1).toString().padStart(4,'0')
+    return `TSM-${year}-${seq}`
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SEED DATA
+// ═══════════════════════════════════════════════════════
+function seedIfEmpty(){
+  if(DB.get('unidades').length===0){
+    ['Serra do Mar|SDM','Sul de Minas|SUL','Vale do Paraíba|VDP'].forEach(s=>{
+      const[nome,sigla]=s.split('|')
+      DB.insert('unidades',{nome,sigla,descricao:'',ativo:true})
+    })
+  }
+  if(DB.get('catalogo').length===0){
+    const itens=[
+      {codigo:'SIGAFIN-120',nome:'SIGAFIN — Financeiro',categoria:'ERP TOTVS',horasPadrao:120,valorHora:180,tipoPreco:'por_hora',ativo:true},
+      {codigo:'SIGAEST-80', nome:'SIGAEST — Estoque',   categoria:'ERP TOTVS',horasPadrao:80, valorHora:180,tipoPreco:'por_hora',ativo:true},
+      {codigo:'SIGACOM-100',nome:'SIGACOM — Compras',   categoria:'ERP TOTVS',horasPadrao:100,valorHora:180,tipoPreco:'por_hora',ativo:true},
+      {codigo:'SIGAFAT-80', nome:'SIGAFAT — Faturamento',categoria:'ERP TOTVS',horasPadrao:80,valorHora:180,tipoPreco:'por_hora',ativo:true},
+      {codigo:'TREIN-USU',  nome:'Treinamento de Usuários',categoria:'Serviços',horasPadrao:16,valorHora:150,tipoPreco:'por_hora',ativo:true},
+      {codigo:'MIG-DADOS',  nome:'Migração de Dados',   categoria:'Técnico',  horasPadrao:40, valorHora:200,tipoPreco:'por_hora',ativo:true},
+      {codigo:'CONS-NEG',   nome:'Consultoria em Negócios',categoria:'Consultoria',horasPadrao:8,valorHora:250,tipoPreco:'por_hora',ativo:true},
+      {codigo:'CUSTOM-INT', nome:'Customização e Integrações',categoria:'Técnico',horasPadrao:20,valorHora:200,tipoPreco:'por_hora',ativo:true},
+      {codigo:'SUPORTE-M',  nome:'Suporte Mensal',       categoria:'Suporte',  horasPadrao:0,  valorHora:0,  valorFixo:2500,tipoPreco:'fixo',ativo:true},
+      {codigo:'IMPLANT-GEN',nome:'Implantação Geral',    categoria:'Serviços', horasPadrao:40, valorHora:170,tipoPreco:'por_hora',ativo:true},
+    ]
+    itens.forEach(i=>DB.insert('catalogo',i))
+  }
+  if(DB.get('usuarios').length===0){
+    DB.insert('usuarios',{nome:'Administrador',email:'admin@tsm.com.br',senha:'admin123',perfil:'administrador',unidadeId:'',ativo:true})
+    DB.insert('usuarios',{nome:'João Vendedor',email:'joao@tsm.com.br',senha:'tsm123',perfil:'vendedor',unidadeId:'',ativo:true})
+    DB.insert('usuarios',{nome:'Maria Arquiteta',email:'maria@tsm.com.br',senha:'tsm123',perfil:'arquiteto',unidadeId:'',ativo:true})
+  } else {
+    // Migração: adicionar senha padrão para usuários que ainda não têm
+    const senhasPadrao={'admin@tsm.com.br':'admin123','joao@tsm.com.br':'tsm123','maria@tsm.com.br':'tsm123'}
+    DB.all('usuarios').forEach(u=>{
+      if(!u.senha){
+        const senha=senhasPadrao[u.email?.toLowerCase()]||'tsm123'
+        DB.update('usuarios',u.id,{senha})
+      }
+    })
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+const H = {
+  cur(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0) },
+  date(d){ if(!d)return'—'; try{return new Date(d+'T12:00:00').toLocaleDateString('pt-BR')}catch{return d} },
+  dt(d){ if(!d)return'—'; return new Date(d).toLocaleString('pt-BR') },
+  esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') },
+  badge(txt,cls){ return `<span class="badge ${cls}">${txt}</span>` },
+  statusOp(s){
+    const m={aberta:'bg-blue-100 text-blue-800',em_negociacao:'bg-yellow-100 text-yellow-800',proposta_enviada:'bg-purple-100 text-purple-800',ganha:'bg-green-100 text-green-800',perdida:'bg-red-100 text-red-800',cancelada:'bg-gray-100 text-gray-700'}
+    const l={aberta:'Aberta',em_negociacao:'Em Negociação',proposta_enviada:'Proposta Enviada',ganha:'Ganha',perdida:'Perdida',cancelada:'Cancelada'}
+    return this.badge(l[s]||s, m[s]||'bg-gray-100 text-gray-700')
+  },
+  statusProp(s){
+    const m={rascunho:'bg-gray-100 text-gray-700',enviada:'bg-blue-100 text-blue-800',aprovada:'bg-green-100 text-green-800',rejeitada:'bg-red-100 text-red-800',expirada:'bg-orange-100 text-orange-700',revisao:'bg-yellow-100 text-yellow-800'}
+    const l={rascunho:'Rascunho',enviada:'Enviada',aprovada:'Aprovada',rejeitada:'Rejeitada',expirada:'Expirada',revisao:'Em Revisão'}
+    return this.badge(l[s]||s, m[s]||'bg-gray-100 text-gray-700')
+  },
+  perfil(p){const m={vendedor:'Vendedor',arquiteto:'Arquiteto de Soluções',gerente_unidade:'Gerente da Unidade',gerente_geral:'Gerente Geral',administrador:'Administrador'};return m[p]||p},
+  empty(title,desc,btnLabel,btnAction){
+    return `<div class="flex flex-col items-center py-16 text-center">
+      <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mb-3">
+        <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+      </div>
+      <h3 class="font-semibold text-gray-900">${title}</h3>
+      ${desc?`<p class="text-gray-400 text-sm mt-1 max-w-xs">${desc}</p>`:''}
+      ${btnLabel?`<button class="btn btn-primary mt-4 btn-sm" onclick="${btnAction}">+ ${btnLabel}</button>`:''}
+    </div>`
+  },
+  header(title,sub,btnLabel,btnAction){
+    return `<div class="flex items-start justify-between mb-5">
+      <div><h1 class="text-2xl font-bold text-gray-900">${title}</h1>${sub?`<p class="text-gray-500 text-sm mt-0.5">${sub}</p>`:''}</div>
+      ${btnLabel?`<button class="btn btn-primary" onclick="${btnAction}">+ ${btnLabel}</button>`:''}
+    </div>`
+  },
+  selectOpts(arr,valKey,labelFn,selected=''){
+    return arr.map(x=>`<option value="${H.esc(x[valKey])}" ${x[valKey]===selected?'selected':''}>${H.esc(labelFn(x))}</option>`).join('')
+  },
+  nameById(k,id,field='nome'){const r=DB.find(k,id);return r?r[field]:'—'},
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════
+function openModal(html){
+  document.getElementById('modal-content').innerHTML=html
+  document.getElementById('modal-overlay').style.display='flex'
+}
+function closeModal(){
+  document.getElementById('modal-overlay').style.display='none'
+}
+
+// ═══════════════════════════════════════════════════════
+// ROUTER
+// ═══════════════════════════════════════════════════════
+function navigate(page, params={}){
+  window._currentPage=page
+  window._params=params
+  document.querySelectorAll('[data-page]').forEach(el=>{
+    el.classList.toggle('active', el.dataset.page===page)
+  })
+  const renders={
+    dashboard:renderDashboard, oportunidades:renderOportunidades, propostas:renderPropostas,
+    clientes:renderClientes, contatos:renderContatos,
+    catalogo:renderCatalogo, usuarios:renderUsuarios, unidades:renderUnidades
+  }
+  const fn=renders[page]||renderDashboard
+  document.getElementById('content').innerHTML=fn(params)
+  bindEvents()
+}
+
+function bindEvents(){
+  // Nav
+  document.querySelectorAll('[data-page]').forEach(el=>{
+    el.onclick=()=>navigate(el.dataset.page)
+  })
+}
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function renderDashboard(){
+  const ops=DB.all('oportunidades'), props=DB.all('propostas')
+  const ganhas=ops.filter(o=>o.status==='ganha')
+  const receitaFechada=ganhas.reduce((a,o)=>a+(o.valorEstimado||0),0)
+  const opsAbertas=ops.filter(o=>!['ganha','perdida','cancelada'].includes(o.status)).length
+
+  const cards=[
+    {l:'Oportunidades Abertas',v:opsAbertas,color:'text-blue-600',bg:'bg-blue-50',page:'oportunidades'},
+    {l:'Propostas',v:props.length,color:'text-purple-600',bg:'bg-purple-50',page:'propostas'},
+    {l:'Clientes',v:DB.all('clientes').length,color:'text-green-600',bg:'bg-green-50',page:'clientes'},
+    {l:'Receita Fechada',v:H.cur(receitaFechada),color:'text-emerald-600',bg:'bg-emerald-50',page:'oportunidades'},
+  ]
+
+  const recentOps=ops.slice(-5).reverse()
+  const recentProps=props.slice(-5).reverse()
+
+  return `
+    <div><h1 class="text-2xl font-bold mb-1">Dashboard</h1><p class="text-gray-500 text-sm mb-5">Visão geral do pipeline TSM</p></div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      ${cards.map(c=>`
+        <div class="card p-5 cursor-pointer hover:shadow-md transition-shadow" onclick="navigate('${c.page}')">
+          <div class="flex items-start justify-between">
+            <div><p class="text-xs text-gray-500 font-medium">${c.l}</p><p class="text-2xl font-bold mt-1">${c.v}</p></div>
+            <div class="w-9 h-9 rounded-lg ${c.bg} flex items-center justify-center">
+              <div class="w-4 h-4 rounded ${c.color.replace('text-','bg-')} opacity-60"></div>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="card">
+        <div class="flex items-center justify-between p-4 border-b border-gray-100">
+          <h2 class="font-semibold">Oportunidades Recentes</h2>
+          <button class="text-xs text-blue-600 hover:underline" onclick="navigate('oportunidades')">Ver todas</button>
+        </div>
+        ${recentOps.length===0?H.empty('Nenhuma oportunidade',''):recentOps.map(o=>{
+          const cli=o.clienteId?DB.find('clientes',o.clienteId):null
+          return `<div class="flex items-center justify-between px-4 py-3 border-t border-gray-50 hover:bg-gray-50 cursor-pointer" onclick="editOportunidade('${o.id}')">
+            <div class="min-w-0"><p class="text-sm font-medium truncate">${H.esc(o.titulo)}</p><p class="text-xs text-gray-400">${cli?H.esc(cli.nome):'—'}</p></div>
+            <div class="ml-3 flex-shrink-0">${H.statusOp(o.status)}</div>
+          </div>`}).join('')}
+      </div>
+      <div class="card">
+        <div class="flex items-center justify-between p-4 border-b border-gray-100">
+          <h2 class="font-semibold">Propostas Recentes</h2>
+          <button class="text-xs text-blue-600 hover:underline" onclick="navigate('propostas')">Ver todas</button>
+        </div>
+        ${recentProps.length===0?H.empty('Nenhuma proposta',''):recentProps.map(p=>{
+          const op=p.oportunidadeId?DB.find('oportunidades',p.oportunidadeId):null
+          const cli=op&&op.clienteId?DB.find('clientes',op.clienteId):null
+          return `<div class="flex items-center justify-between px-4 py-3 border-t border-gray-50 hover:bg-gray-50 cursor-pointer" onclick="editProposta('${p.id}')">
+            <div class="min-w-0"><p class="text-sm font-medium">${H.esc(p.numero||'Rascunho')}</p><p class="text-xs text-gray-400">${cli?H.esc(cli.nome):'—'}</p></div>
+            <div class="ml-3 flex items-center gap-2 flex-shrink-0"><span class="text-sm font-semibold">${H.cur(p.valorTotal)}</span>${H.statusProp(p.status)}</div>
+          </div>`}).join('')}
+      </div>
+    </div>`
+}
+
+// ═══════════════════════════════════════════════════════
+// OPORTUNIDADES
+// ═══════════════════════════════════════════════════════
+function renderOportunidades(){
+  const ops=DB.all('oportunidades').reverse()
+  return H.header('Oportunidades',`${ops.length} oportunidade(s)`,'Nova Oportunidade','newOportunidade()')+
+  (ops.length===0?`<div class="card">${H.empty('Nenhuma oportunidade','Crie uma oportunidade para começar o acompanhamento','Nova Oportunidade','newOportunidade()')}</div>`:
+  `<div class="card overflow-hidden"><table class="w-full">
+    <thead><tr>
+      <th class="th">Título / Cliente</th><th class="th">Status</th><th class="th">Vendedor</th>
+      <th class="th">Unidade</th><th class="th text-right">Valor Est.</th><th class="th text-center">Prob.</th><th class="th">Fechamento</th><th class="th"></th>
+    </tr></thead>
+    <tbody>${ops.map(o=>{
+      const cli=o.clienteId?DB.find('clientes',o.clienteId):null
+      const vend=o.vendedorId?DB.find('usuarios',o.vendedorId):null
+      const uni=o.unidadeId?DB.find('unidades',o.unidadeId):null
+      return `<tr>
+        <td class="td"><p class="font-medium">${H.esc(o.titulo)}</p><p class="text-xs text-gray-400">${cli?H.esc(cli.nome):'—'}</p></td>
+        <td class="td">${H.statusOp(o.status)}</td>
+        <td class="td text-gray-500 text-sm">${vend?H.esc(vend.nome):'—'}</td>
+        <td class="td">${uni?`<span class="badge bg-gray-100 text-gray-700">${H.esc(uni.sigla)}</span>`:'—'}</td>
+        <td class="td text-right font-medium">${o.valorEstimado?H.cur(o.valorEstimado):'—'}</td>
+        <td class="td text-center"><span class="text-sm font-semibold ${o.probabilidade>=70?'text-green-600':o.probabilidade>=40?'text-yellow-600':'text-red-500'}">${o.probabilidade||0}%</span></td>
+        <td class="td text-sm text-gray-500">${H.date(o.dataFechamento)}</td>
+        <td class="td"><button class="btn btn-secondary btn-sm" onclick="editOportunidade('${o.id}')">Abrir</button></td>
+      </tr>`}).join('')}
+    </tbody>
+  </table></div>`)
+}
+
+function newOportunidade(){ openModal(formOportunidade({})) }
+function editOportunidade(id){ openModal(formOportunidade(DB.find('oportunidades',id)||{})) }
+
+function formOportunidade(o={}){
+  const clis=DB.all('clientes'), ctts=DB.all('contatos')
+  const users=DB.all('usuarios'), unis=DB.all('unidades')
+  const isEdit=!!o.id
+  // Filtrar contatos do cliente selecionado
+  const contatosFiltrados=o.clienteId?ctts.filter(c=>c.clienteId===o.clienteId||c.empresaId===o.clienteId):ctts
+  return `
+  <div class="p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">${isEdit?'Editar':'Nova'} Oportunidade</h2>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+    </div>
+    <div class="space-y-3">
+      <div><label class="lbl">Título *</label><input id="op-titulo" class="inp" value="${H.esc(o.titulo||'')}" placeholder="Ex: Implantação SIGAFIN - Empresa ABC"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Status</label>
+          <select id="op-status" class="inp">
+            ${[['aberta','Aberta'],['em_negociacao','Em Negociação'],['proposta_enviada','Proposta Enviada'],['ganha','Ganha'],['perdida','Perdida'],['cancelada','Cancelada']].map(([v,l])=>`<option value="${v}" ${o.status===v?'selected':''}>${l}</option>`).join('')}
+          </select></div>
+        <div><label class="lbl">Unidade TSM</label>
+          <select id="op-unidade" class="inp"><option value="">Selecione...</option>${H.selectOpts(unis,'id',u=>`${u.nome} (${u.sigla})`,o.unidadeId||'')}</select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Cliente *</label>
+          <select id="op-cliente" class="inp" onchange="editOportunidade && navigate && undefined">
+            <option value="">Selecione o cliente...</option>
+            ${H.selectOpts(clis,'id',c=>c.nome+(c.cpfCnpj?' — '+c.cpfCnpj:''),o.clienteId||'')}
+          </select></div>
+        <div><label class="lbl">Contato do Cliente</label>
+          <select id="op-contato" class="inp">
+            <option value="">Nenhum</option>
+            ${H.selectOpts(ctts,'id',c=>c.nome+(c.cargo?' ('+c.cargo+')':''),o.contatoId||'')}
+          </select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Vendedor Responsável</label>
+          <select id="op-vendedor" class="inp"><option value="">Nenhum</option>${H.selectOpts(users,'id',u=>u.nome,o.vendedorId||'')}</select></div>
+        <div><label class="lbl">Arquiteto de Soluções</label>
+          <select id="op-arquiteto" class="inp"><option value="">Nenhum</option>${H.selectOpts(users,'id',u=>u.nome,o.arquitetoId||'')}</select></div>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="lbl">Valor Estimado (R$)</label><input id="op-valor" class="inp" type="number" min="0" step="0.01" value="${o.valorEstimado||''}"></div>
+        <div><label class="lbl">Probabilidade: <span id="op-prob-lbl">${o.probabilidade||50}%</span></label>
+          <input id="op-prob" class="inp" type="range" min="0" max="100" step="5" value="${o.probabilidade||50}" oninput="document.getElementById('op-prob-lbl').textContent=this.value+'%'"></div>
+        <div><label class="lbl">Fechamento Previsto</label><input id="op-fechamento" class="inp" type="date" value="${o.dataFechamento||''}"></div>
+      </div>
+      <div><label class="lbl">Origem</label><input id="op-origem" class="inp" value="${H.esc(o.origem||'')}" placeholder="Indicação, Evento..."></div>
+      <div><label class="lbl">Descrição</label><textarea id="op-desc" class="inp" rows="2">${H.esc(o.descricao||'')}</textarea></div>
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="delOportunidade('${o.id}')">Excluir</button>`:''}</div>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveOportunidade('${o.id||''}')">
+          ${isEdit?'Salvar':'Criar Oportunidade'}
+        </button>
+      </div>
+    </div>
+  </div>`
+}
+
+function saveOportunidade(id){
+  const data={
+    titulo:document.getElementById('op-titulo').value.trim(),
+    status:document.getElementById('op-status').value,
+    unidadeId:document.getElementById('op-unidade').value,
+    clienteId:document.getElementById('op-cliente').value,
+    contatoId:document.getElementById('op-contato').value,
+    vendedorId:document.getElementById('op-vendedor').value,
+    arquitetoId:document.getElementById('op-arquiteto').value,
+    valorEstimado:parseFloat(document.getElementById('op-valor').value)||0,
+    probabilidade:parseInt(document.getElementById('op-prob').value)||50,
+    dataFechamento:document.getElementById('op-fechamento').value,
+    origem:document.getElementById('op-origem').value.trim(),
+    descricao:document.getElementById('op-desc').value.trim(),
+  }
+  if(!data.titulo){alert('Título é obrigatório');return}
+  if(id) DB.update('oportunidades',id,data); else DB.insert('oportunidades',data)
+  closeModal(); navigate('oportunidades')
+}
+function delOportunidade(id){
+  if(!confirm('Excluir esta oportunidade?'))return
+  DB.delete('oportunidades',id); closeModal(); navigate('oportunidades')
+}
+
+// ═══════════════════════════════════════════════════════
+// PROPOSTAS
+// ═══════════════════════════════════════════════════════
+function renderPropostas(){
+  const props=DB.all('propostas').reverse()
+  return H.header('Propostas',`${props.length} proposta(s)`,'Nova Proposta','newProposta()')+
+  (props.length===0?`<div class="card">${H.empty('Nenhuma proposta','Crie propostas vinculadas a oportunidades','Nova Proposta','newProposta()')}</div>`:
+  `<div class="card overflow-hidden"><table class="w-full">
+    <thead><tr>
+      <th class="th">Número</th><th class="th">Oportunidade / Cliente</th><th class="th">Status</th>
+      <th class="th text-right">Total</th><th class="th">Validade</th><th class="th">Criada em</th><th class="th"></th>
+    </tr></thead>
+    <tbody>${props.map(p=>{
+      const op=p.oportunidadeId?DB.find('oportunidades',p.oportunidadeId):null
+      const cli=op&&op.clienteId?DB.find('clientes',op.clienteId):null
+      return `<tr>
+        <td class="td font-mono font-semibold text-sm">${H.esc(p.numero||'—')}</td>
+        <td class="td"><p class="font-medium text-sm">${H.esc(op?op.titulo:'(sem oportunidade)')}</p><p class="text-xs text-gray-400">${cli?H.esc(cli.nome):'—'}</p></td>
+        <td class="td">${H.statusProp(p.status)}</td>
+        <td class="td text-right font-semibold">${H.cur(p.valorTotal)}</td>
+        <td class="td text-sm text-gray-500">${H.date(p.validade)}</td>
+        <td class="td text-sm text-gray-500">${H.date(p.createdAt)}</td>
+        <td class="td">
+          <div class="flex gap-1">
+            <button class="btn btn-secondary btn-sm" onclick="editProposta('${p.id}')">Editar</button>
+            <button class="btn btn-primary btn-sm" onclick="viewProposta('${p.id}')">Ver PDF</button>
+          </div>
+        </td>
+      </tr>`}).join('')}
+    </tbody>
+  </table></div>`)
+}
+
+function newProposta(oportunidadeId=''){
+  const ops=DB.all('oportunidades'), cat=DB.all('catalogo').filter(c=>c.ativo)
+  openModal(formProposta({oportunidadeId},ops,cat))
+}
+function editProposta(id){
+  const p=DB.find('propostas',id)||{}
+  const ops=DB.all('oportunidades'), cat=DB.all('catalogo').filter(c=>c.ativo)
+  openModal(formProposta(p,ops,cat))
+}
+
+let _propostaItens=[]
+
+function formProposta(p={},ops,cat){
+  _propostaItens=p.itens?JSON.parse(JSON.stringify(p.itens)):[]
+  const isEdit=!!p.id
+
+  return `
+  <div class="p-5" style="min-width:640px">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">${isEdit?'Editar':'Nova'} Proposta ${p.numero?'— '+p.numero:''}</h2>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+    </div>
+
+    <div class="space-y-3 mb-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Oportunidade Vinculada</label>
+          <select id="p-op" class="inp"><option value="">Avulsa (sem oportunidade)</option>${H.selectOpts(ops,'id',o=>o.titulo,p.oportunidadeId||'')}</select></div>
+        <div><label class="lbl">Status</label>
+          <select id="p-status" class="inp">
+            ${[['rascunho','Rascunho'],['enviada','Enviada'],['aprovada','Aprovada'],['rejeitada','Rejeitada'],['expirada','Expirada']].map(([v,l])=>`<option value="${v}" ${(p.status||'rascunho')===v?'selected':''}>${l}</option>`).join('')}
+          </select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Validade</label><input id="p-validade" class="inp" type="date" value="${p.validade||''}"></div>
+        <div><label class="lbl">Condições de Pagamento</label><input id="p-cond" class="inp" value="${H.esc(p.condicoesPagamento||'')}" placeholder="Ex: 50% início, 50% conclusão"></div>
+      </div>
+      <div><label class="lbl">Observações</label><textarea id="p-obs" class="inp" rows="2">${H.esc(p.observacoes||'')}</textarea></div>
+    </div>
+
+    <!-- Itens -->
+    <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
+      <div class="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+        <span class="text-sm font-semibold text-gray-700">Itens da Proposta</span>
+        <button class="btn btn-secondary btn-sm" onclick="addPropostaItem()">+ Adicionar Item</button>
+      </div>
+      <div id="proposta-itens">
+        ${renderItensTable(cat)}
+      </div>
+      <!-- Totais -->
+      <div class="px-3 py-3 bg-gray-50 border-t border-gray-200">
+        <div class="flex justify-end">
+          <div class="w-60 space-y-1 text-sm">
+            <div class="flex justify-between"><span class="text-gray-500">Subtotal:</span><span id="p-subtotal" class="font-medium">R$ 0,00</span></div>
+            <div class="flex items-center justify-between gap-2"><span class="text-gray-500 flex-shrink-0">Desconto geral %:</span>
+              <input id="p-desc-geral" class="inp text-right w-20 py-0.5" type="number" min="0" max="100" step="0.5" value="${p.descontoGeral||0}" oninput="recalcTotais()"></div>
+            <div class="flex justify-between font-bold border-t border-gray-200 pt-1"><span>TOTAL:</span><span id="p-total" class="text-blue-700">R$ 0,00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="delProposta('${p.id}')">Excluir</button>`:''}</div>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        ${isEdit?`<button class="btn btn-secondary" onclick="saveProposta('${p.id}',false);viewProposta('${p.id}')">Salvar e Ver PDF</button>`:''}
+        <button class="btn btn-primary" onclick="saveProposta('${p.id||''}',true)">${isEdit?'Salvar':'Criar Proposta'}</button>
+      </div>
+    </div>
+  </div>`
+}
+
+function renderItensTable(cat){
+  cat=cat||DB.all('catalogo').filter(c=>c.ativo)
+  if(_propostaItens.length===0){
+    return `<div class="p-4 text-center text-sm text-gray-400">Nenhum item. Clique em "+ Adicionar Item".</div>`
+  }
+  return `<table class="w-full text-xs">
+    <thead><tr class="bg-gray-50 border-b border-gray-200">
+      <th class="th py-1.5">Do Catálogo / Descrição</th>
+      <th class="th py-1.5 w-20 text-center">Horas/Qtd</th>
+      <th class="th py-1.5 w-24 text-right">Valor Unit.</th>
+      <th class="th py-1.5 w-14 text-center">Desc%</th>
+      <th class="th py-1.5 w-24 text-right">Total</th>
+      <th class="th py-1.5 w-6"></th>
+    </tr></thead>
+    <tbody>${_propostaItens.map((item,i)=>{
+      const total=calcItemTotal(item)
+      return `<tr class="border-b border-gray-100">
+        <td class="td py-1.5">
+          <select class="inp py-0.5 text-xs mb-1" onchange="applyFromCatalog(${i},this.value)">
+            <option value="">— Personalizado —</option>
+            ${cat.map(c=>`<option value="${c.id}" ${item.catalogoId===c.id?'selected':''}>${c.codigo?c.codigo+' — ':''} ${c.nome}</option>`).join('')}
+          </select>
+          <input class="inp py-0.5 text-xs" value="${H.esc(item.descricao||'')}" placeholder="Descrição..." oninput="_propostaItens[${i}].descricao=this.value;recalcTotais()">
+        </td>
+        <td class="td py-1.5"><input class="inp py-0.5 text-right" type="number" min="0" step="0.5" value="${item.horas||item.quantidade||0}" oninput="_propostaItens[${i}].horas=parseFloat(this.value)||0;recalcTotais()"></td>
+        <td class="td py-1.5"><input class="inp py-0.5 text-right" type="number" min="0" step="0.01" value="${item.valorHora||item.valorUnitario||0}" oninput="_propostaItens[${i}].valorHora=parseFloat(this.value)||0;recalcTotais()"></td>
+        <td class="td py-1.5"><input class="inp py-0.5 text-center" type="number" min="0" max="100" step="1" value="${item.descontoPercentual||0}" oninput="_propostaItens[${i}].descontoPercentual=parseFloat(this.value)||0;recalcTotais()"></td>
+        <td class="td py-1.5 text-right font-semibold item-total-${i}">${H.cur(total)}</td>
+        <td class="td py-1.5"><button class="text-gray-300 hover:text-red-500" onclick="removePropostaItem(${i})">&times;</button></td>
+      </tr>`}).join('')}
+    </tbody>
+  </table>`
+}
+
+function applyFromCatalog(idx,catId){
+  const cat=DB.find('catalogo',catId)
+  if(!cat)return
+  _propostaItens[idx].catalogoId=catId
+  _propostaItens[idx].descricao=cat.nome
+  _propostaItens[idx].horas=cat.tipoPreco==='por_hora'?(cat.horasPadrao||0):1
+  _propostaItens[idx].valorHora=cat.tipoPreco==='por_hora'?(cat.valorHora||0):(cat.valorFixo||0)
+  _propostaItens[idx].descontoPercentual=0
+  refreshItensTable()
+}
+
+function calcItemTotal(item){
+  const h=item.horas||item.quantidade||0
+  const v=item.valorHora||item.valorUnitario||0
+  const d=item.descontoPercentual||0
+  return h*v*(1-d/100)
+}
+
+function recalcTotais(){
+  const subtotal=_propostaItens.reduce((a,i)=>a+calcItemTotal(i),0)
+  const desc=parseFloat(document.getElementById('p-desc-geral')?.value)||0
+  const total=subtotal*(1-desc/100)
+  const s=document.getElementById('p-subtotal')
+  const t=document.getElementById('p-total')
+  if(s)s.textContent=H.cur(subtotal)
+  if(t)t.textContent=H.cur(total)
+  // Atualizar totais por linha
+  _propostaItens.forEach((item,i)=>{
+    const el=document.querySelector(`.item-total-${i}`)
+    if(el)el.textContent=H.cur(calcItemTotal(item))
+  })
+}
+
+function refreshItensTable(){
+  document.getElementById('proposta-itens').innerHTML=renderItensTable()
+  recalcTotais()
+}
+
+function addPropostaItem(){
+  _propostaItens.push({descricao:'',horas:0,valorHora:0,descontoPercentual:0})
+  refreshItensTable()
+}
+
+function removePropostaItem(i){
+  _propostaItens.splice(i,1); refreshItensTable()
+}
+
+function saveProposta(id, andClose=true){
+  const subtotal=_propostaItens.reduce((a,i)=>a+calcItemTotal(i),0)
+  const descGeral=parseFloat(document.getElementById('p-desc-geral')?.value)||0
+  const valorDesconto=subtotal*(descGeral/100)
+  const data={
+    oportunidadeId:document.getElementById('p-op').value,
+    status:document.getElementById('p-status').value,
+    validade:document.getElementById('p-validade').value,
+    condicoesPagamento:document.getElementById('p-cond').value.trim(),
+    observacoes:document.getElementById('p-obs').value.trim(),
+    descontoGeral:descGeral,
+    valorSubtotal:subtotal,
+    valorDesconto,
+    valorTotal:subtotal-valorDesconto,
+    itens:JSON.parse(JSON.stringify(_propostaItens)),
+  }
+  let saved
+  if(id){ saved=DB.update('propostas',id,data) }
+  else { data.numero=DB.nextPropostaNum(); saved=DB.insert('propostas',data) }
+  if(andClose){ closeModal(); navigate('propostas') }
+  return saved
+}
+
+function delProposta(id){
+  if(!confirm('Excluir esta proposta?'))return
+  DB.delete('propostas',id); closeModal(); navigate('propostas')
+}
+
+// ═══════════════════════════════════════════════════════
+// VISUALIZAÇÃO / PDF DA PROPOSTA
+// ═══════════════════════════════════════════════════════
+function viewProposta(id){
+  const p=DB.find('propostas',id); if(!p)return
+  const op=p.oportunidadeId?DB.find('oportunidades',p.oportunidadeId):null
+  const cli=op&&op.clienteId?DB.find('clientes',op.clienteId):null
+  const ctt=op&&op.contatoId?DB.find('contatos',op.contatoId):null
+  const vend=op&&op.vendedorId?DB.find('usuarios',op.vendedorId):null
+  const uni=op&&op.unidadeId?DB.find('unidades',op.unidadeId):null
+
+  const statusLabels={rascunho:'Rascunho',enviada:'Enviada',aprovada:'Aprovada',rejeitada:'Rejeitada',expirada:'Expirada'}
+
+  openModal(`
+  <div class="p-5">
+    <div class="flex items-center justify-between mb-4 no-print">
+      <h2 class="text-lg font-bold">Proposta ${H.esc(p.numero||'Rascunho')}</h2>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="downloadPDF('${id}')">⬇ Baixar PDF</button>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      </div>
+    </div>
+
+    <!-- DOCUMENTO -->
+    <div id="proposta-preview-${id}" style="background:#fff;font-family:Arial,sans-serif;font-size:13px;max-height:65vh;overflow-y:auto;border:1px solid #e5e7eb;border-radius:.5rem">
+      <!-- Header azul -->
+      <div style="background:#1d4ed8;color:#fff;padding:20px 24px;display:flex;justify-content:space-between;align-items:start">
+        <div>
+          <div style="font-size:22px;font-weight:900;letter-spacing:2px">TSM</div>
+          <div style="font-size:11px;color:#bfdbfe;margin-top:2px">Serra do Mar · Sul de Minas · Vale do Paraíba</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:#93c5fd;text-transform:uppercase;letter-spacing:1px">Proposta Comercial</div>
+          <div style="font-size:18px;font-weight:700;margin-top:2px">${H.esc(p.numero||'Rascunho')}</div>
+          <div style="font-size:11px;color:#bfdbfe">${statusLabels[p.status]||p.status}</div>
+        </div>
+      </div>
+      <!-- Meta -->
+      <div style="background:#f9fafb;padding:10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;border-bottom:1px solid #e5e7eb">
+        ${[['Data',H.date(p.createdAt)],['Validade',H.date(p.validade)||'—'],['Unidade',uni?`${uni.nome} (${uni.sigla})`:'—'],['Vendedor',vend?vend.nome:'—']].map(([l,v])=>
+          `<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">${l}</div><div style="font-weight:600;margin-top:2px">${v}</div></div>`
+        ).join('')}
+      </div>
+      <div style="padding:20px 24px">
+        <!-- Cliente -->
+        <div style="margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:8px">Dados do Cliente</div>
+          ${cli ? `
+            <div style="font-weight:700;font-size:14px">${H.esc(cli.nome)}</div>
+            ${cli.cpfCnpj?`<div style="color:#6b7280;font-size:12px">CNPJ: ${H.esc(cli.cpfCnpj)}</div>`:''}
+            ${cli.endereco?`<div style="color:#6b7280;font-size:12px">${H.esc([cli.endereco,cli.complemento].filter(Boolean).join(', '))}</div>`:''}
+            ${cli.cidade?`<div style="color:#6b7280;font-size:12px">${H.esc(cli.cidade)}${cli.estado?' — '+H.esc(cli.estado):''}</div>`:''}
+            ${cli.email?`<div style="color:#6b7280;font-size:12px">${H.esc(cli.email)}</div>`:''}
+            ${cli.telefone?`<div style="color:#6b7280;font-size:12px">Tel: ${H.esc(cli.telefone)}</div>`:''}
+            ${cli.contato?`<div style="margin-top:4px;font-size:12px;color:#374151"><strong>Contato:</strong> ${H.esc(cli.contato)}</div>`:''}
+          ` : '<div style="color:#9ca3af;font-style:italic">Nenhum cliente vinculado</div>'}
+          ${ctt?`<div style="margin-top:4px;font-size:12px;color:#374151"><strong>Atenção:</strong> ${H.esc(ctt.nome)}${ctt.cargo?' — '+H.esc(ctt.cargo):''}${ctt.email?' · '+H.esc(ctt.email):''}</div>`:''}
+        </div>
+        <!-- Objeto -->
+        ${op?`<div style="margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:8px">Objeto da Proposta</div>
+          <div style="font-weight:600">${H.esc(op.titulo)}</div>
+        </div>`:''}
+        <!-- Itens -->
+        <div style="margin-bottom:16px">
+          <div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:8px">Serviços e Valores</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="background:#1d4ed8;color:#fff">
+              <th style="padding:7px 10px;text-align:left;font-weight:600">Serviço / Descrição</th>
+              <th style="padding:7px 10px;text-align:center;font-weight:600;width:70px">Horas</th>
+              <th style="padding:7px 10px;text-align:right;font-weight:600;width:90px">Valor/h</th>
+              <th style="padding:7px 10px;text-align:center;font-weight:600;width:50px">Desc%</th>
+              <th style="padding:7px 10px;text-align:right;font-weight:600;width:90px">Total</th>
+            </tr></thead>
+            <tbody>${(p.itens||[]).map((item,i)=>`
+              <tr style="background:${i%2===0?'#fff':'#f9fafb'}">
+                <td style="padding:7px 10px;border-top:1px solid #f3f4f6">${H.esc(item.descricao||'—')}</td>
+                <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:center;color:#6b7280">${item.horas||item.quantidade||0}</td>
+                <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:right;color:#6b7280">${H.cur(item.valorHora||item.valorUnitario||0)}</td>
+                <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:center;color:#6b7280">${item.descontoPercentual>0?item.descontoPercentual+'%':'—'}</td>
+                <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:right;font-weight:600">${H.cur(calcItemTotal(item))}</td>
+              </tr>`).join('')}
+            </tbody>
+            <tfoot>
+              <tr style="background:#f9fafb"><td colspan="4" style="padding:7px 10px;text-align:right;color:#6b7280;border-top:1px solid #e5e7eb">Subtotal:</td><td style="padding:7px 10px;text-align:right;font-weight:600;border-top:1px solid #e5e7eb">${H.cur(p.valorSubtotal)}</td></tr>
+              ${p.descontoGeral>0?`<tr style="background:#f9fafb"><td colspan="4" style="padding:7px 10px;text-align:right;color:#dc2626;border-top:1px solid #e5e7eb">Desconto (${p.descontoGeral}%):</td><td style="padding:7px 10px;text-align:right;color:#dc2626;font-weight:600;border-top:1px solid #e5e7eb">— ${H.cur(p.valorDesconto)}</td></tr>`:''}
+              <tr style="background:#1d4ed8;color:#fff"><td colspan="4" style="padding:9px 10px;text-align:right;font-weight:700">TOTAL:</td><td style="padding:9px 10px;text-align:right;font-weight:900;font-size:15px">${H.cur(p.valorTotal)}</td></tr>
+            </tfoot>
+          </table>
+        </div>
+        ${p.condicoesPagamento?`<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:6px">Condições de Pagamento</div><div style="color:#374151;font-size:12px">${H.esc(p.condicoesPagamento)}</div></div>`:''}
+        ${p.observacoes?`<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:6px">Observações</div><div style="color:#374151;font-size:12px">${H.esc(p.observacoes)}</div></div>`:''}
+        <!-- Assinaturas -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:32px;padding-top:8px">
+          <div style="border-top:2px solid #d1d5db;padding-top:6px;text-align:center">
+            <div style="font-weight:600">${vend?H.esc(vend.nome):'Responsável Comercial'}</div>
+            <div style="font-size:11px;color:#6b7280">TSM${uni?' — '+H.esc(uni.nome):''}</div>
+          </div>
+          <div style="border-top:2px solid #d1d5db;padding-top:6px;text-align:center">
+            <div style="font-weight:600">${ctt?H.esc(ctt.nome):cli&&cli.contato?H.esc(cli.contato):'Cliente / Responsável'}</div>
+            <div style="font-size:11px;color:#6b7280">${cli?H.esc(cli.nome):''}</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#1d4ed8;color:#bfdbfe;font-size:11px;text-align:center;padding:8px">
+        TSM · Proposta ${H.esc(p.numero||'')} · Gerada em ${new Date().toLocaleDateString('pt-BR')}
+      </div>
+    </div>
+  </div>`)
+}
+
+function downloadPDF(id){
+  const p=DB.find('propostas',id); if(!p)return
+  const op=p.oportunidadeId?DB.find('oportunidades',p.oportunidadeId):null
+  const cli=op&&op.clienteId?DB.find('clientes',op.clienteId):null
+  const ctt=op&&op.contatoId?DB.find('contatos',op.contatoId):null
+  const vend=op&&op.vendedorId?DB.find('usuarios',op.vendedorId):null
+  const uni=op&&op.unidadeId?DB.find('unidades',op.unidadeId):null
+
+  const {jsPDF}=window.jspdf
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'})
+  const W=doc.internal.pageSize.getWidth(), M=15
+  const azul=[29,78,216], branco=[255,255,255], cinza=[107,114,128]
+
+  // Header
+  doc.setFillColor(...azul); doc.rect(0,0,W,28,'F')
+  doc.setTextColor(...branco)
+  doc.setFontSize(18); doc.setFont('helvetica','bold'); doc.text('TSM',M,13)
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text('Serra do Mar · Sul de Minas · Vale do Paraíba',M,20)
+  doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.text('PROPOSTA COMERCIAL',W-M,13,{align:'right'})
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(p.numero||'Rascunho',W-M,20,{align:'right'})
+
+  let y=35
+  doc.setTextColor(0,0,0); doc.setFontSize(8)
+
+  // Info row
+  const info=[['Data:',H.date(p.createdAt)],['Validade:',H.date(p.validade)||'—'],['Unidade:',uni?`${uni.nome} (${uni.sigla})`:'—'],['Vendedor:',vend?vend.nome:'—']]
+  info.forEach(([l,v],i)=>{
+    const x=M+(i<2?0:W/2-M)+(i%2===0?0:W/4-M)
+    if(i===2) y=35
+    doc.setFont('helvetica','bold'); doc.text(l,M+(i%2)*(W/2-M),y+(Math.floor(i/2)*6))
+    doc.setFont('helvetica','normal'); doc.text(v,M+(i%2)*(W/2-M)+22,y+(Math.floor(i/2)*6))
+  })
+  y+=14
+
+  // Seção cliente
+  doc.setFillColor(243,244,246); doc.rect(M,y,W-M*2,6,'F')
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...azul)
+  doc.text('DADOS DO CLIENTE',M+2,y+4)
+  y+=10; doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); doc.setFontSize(8)
+
+  if(cli){
+    doc.setFont('helvetica','bold'); doc.text(cli.nome,M,y)
+    doc.setFont('helvetica','normal')
+    if(cli.cpfCnpj){y+=5;doc.text('CNPJ: '+cli.cpfCnpj,M,y)}
+    const end=[cli.endereco,cli.complemento].filter(Boolean).join(', ')
+    if(end){y+=5;doc.text(end,M,y)}
+    if(cli.cidade){
+      const locali=cli.cidade+(cli.estado?' — '+cli.estado:'')
+      y+=5;doc.text(locali,M,y)
+    }
+    if(cli.email){y+=5;doc.text(cli.email,M,y)}
+    if(cli.telefone){doc.text('Tel: '+cli.telefone,W/2,y)}
+    if(cli.contato&&!ctt){y+=5;doc.text('Contato: '+cli.contato,M,y)}
+  }
+  if(ctt){y+=5;doc.text(`Contato: ${ctt.nome}${ctt.cargo?' — '+ctt.cargo:''}${ctt.email?' | '+ctt.email:''}`,M,y)}
+  y+=10
+
+  if(op){
+    doc.setFont('helvetica','bold'); doc.setFontSize(9)
+    doc.text('Ref.: '+op.titulo,M,y); y+=8
+    doc.setFont('helvetica','normal'); doc.setFontSize(8)
+  }
+
+  // Tabela itens
+  doc.setFillColor(243,244,246); doc.rect(M,y,W-M*2,6,'F')
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...azul)
+  doc.text('ITENS DA PROPOSTA',M+2,y+4); y+=8; doc.setTextColor(0,0,0)
+
+  doc.autoTable({
+    startY:y, margin:{left:M,right:M},
+    head:[['Serviço / Descrição','Horas','Valor/h','Desc%','Total']],
+    body:(p.itens||[]).map(item=>[item.descricao||'—',item.horas||item.quantidade||0,H.cur(item.valorHora||item.valorUnitario||0),item.descontoPercentual>0?item.descontoPercentual+'%':'—',H.cur(calcItemTotal(item))]),
+    foot:[
+      ['','','','Subtotal',H.cur(p.valorSubtotal)],
+      ...(p.descontoGeral>0?[['','','',`Desconto (${p.descontoGeral}%)`,`— ${H.cur(p.valorDesconto)}`]]:[]),
+      ['','','','TOTAL',H.cur(p.valorTotal)],
+    ],
+    headStyles:{fillColor:azul,textColor:branco,fontSize:8,fontStyle:'bold'},
+    footStyles:{fillColor:[249,250,251],textColor:[0,0,0],fontSize:8,fontStyle:'bold'},
+    bodyStyles:{fontSize:8},
+    columnStyles:{0:{cellWidth:'auto'},1:{cellWidth:18,halign:'center'},2:{cellWidth:28,halign:'right'},3:{cellWidth:16,halign:'center'},4:{cellWidth:28,halign:'right',fontStyle:'bold'}},
+    alternateRowStyles:{fillColor:[249,250,251]},
+  })
+
+  let yf=doc.lastAutoTable.finalY+8
+  if(p.condicoesPagamento){
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...azul)
+    doc.text('CONDIÇÕES DE PAGAMENTO',M,yf); yf+=5
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(0,0,0)
+    const lines=doc.splitTextToSize(p.condicoesPagamento,W-M*2)
+    doc.text(lines,M,yf); yf+=lines.length*5+4
+  }
+  if(p.observacoes){
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...azul)
+    doc.text('OBSERVAÇÕES',M,yf); yf+=5
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(0,0,0)
+    const lines=doc.splitTextToSize(p.observacoes,W-M*2)
+    doc.text(lines,M,yf); yf+=lines.length*5+4
+  }
+
+  // Assinaturas
+  if(yf<230)yf=230
+  doc.setDrawColor(200,200,200)
+  doc.line(M,yf,M+65,yf); doc.line(W-M-65,yf,W-M,yf); yf+=4
+  doc.setFontSize(8); doc.setTextColor(...cinza)
+  doc.text(vend?vend.nome:'Responsável Comercial',M+32,yf,{align:'center'})
+  doc.text('Cliente / Responsável',W-M-32,yf,{align:'center'})
+
+  // Rodapé
+  const pH=doc.internal.pageSize.getHeight()
+  doc.setFillColor(...azul); doc.rect(0,pH-10,W,10,'F')
+  doc.setTextColor(...branco); doc.setFontSize(7)
+  doc.text(`TSM — Proposta ${p.numero||''} — Gerada em ${new Date().toLocaleDateString('pt-BR')}`,W/2,pH-4,{align:'center'})
+
+  doc.save(`Proposta_TSM_${p.numero||'Rascunho'}.pdf`)
+}
+
+// ═══════════════════════════════════════════════════════
+// EMPRESAS
+// ═══════════════════════════════════════════════════════
+function renderEmpresas(){
+  const emps=DB.all('empresas').sort((a,b)=>a.razaoSocial?.localeCompare(b.razaoSocial||'')||0)
+  return H.header('Empresas',`${emps.length} empresa(s)`,'Nova Empresa','newEmpresa()')+
+  (emps.length===0?`<div class="card">${H.empty('Nenhuma empresa cadastrada','','Nova Empresa','newEmpresa()')}</div>`:
+  `<div class="card overflow-hidden"><table class="w-full">
+    <thead><tr><th class="th">Razão Social / Fantasia</th><th class="th">CNPJ</th><th class="th">Segmento</th><th class="th">Cidade/UF</th><th class="th">Telefone</th><th class="th"></th></tr></thead>
+    <tbody>${emps.map(e=>`<tr>
+      <td class="td"><p class="font-medium">${H.esc(e.razaoSocial)}</p>${e.nomeFantasia?`<p class="text-xs text-gray-400">${H.esc(e.nomeFantasia)}</p>`:''}</td>
+      <td class="td text-gray-500 text-sm">${H.esc(e.cnpj||'—')}</td>
+      <td class="td text-gray-500 text-sm">${H.esc(e.segmento||'—')}</td>
+      <td class="td text-gray-500 text-sm">${[e.cidade,e.estado].filter(Boolean).join('/')||'—'}</td>
+      <td class="td text-gray-500 text-sm">${H.esc(e.telefone||'—')}</td>
+      <td class="td"><button class="btn btn-secondary btn-sm" onclick="editEmpresa('${e.id}')">Editar</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`)
+}
+function newEmpresa(){ openModal(formEmpresa({})) }
+function editEmpresa(id){ openModal(formEmpresa(DB.find('empresas',id)||{})) }
+function formEmpresa(e={}){
+  const isEdit=!!e.id
+  const F=(id,lbl,val='',type='text',ph='')=>`<div><label class="lbl">${lbl}</label><input id="${id}" class="inp" type="${type}" value="${H.esc(val)}" placeholder="${ph}"></div>`
+  return `<div class="p-5">
+    <div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold">${isEdit?'Editar':'Nova'} Empresa</h2><button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button></div>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">${F('e-razao','Razão Social *',e.razaoSocial)} ${F('e-fantasia','Nome Fantasia',e.nomeFantasia)}</div>
+      <div class="grid grid-cols-2 gap-3">${F('e-cnpj','CNPJ',e.cnpj,'text','00.000.000/0001-00')} ${F('e-segmento','Segmento',e.segmento)}</div>
+      <div class="grid grid-cols-2 gap-3">${F('e-tel','Telefone',e.telefone)} ${F('e-email','E-mail',e.email,'email')}</div>
+      <div class="grid grid-cols-3 gap-3">${F('e-logra','Logradouro',e.logradouro)} ${F('e-num','Número',e.numero)} ${F('e-cidade','Cidade',e.cidade)}</div>
+      <div class="grid grid-cols-2 gap-3">${F('e-estado','UF',e.estado)} ${F('e-site','Website',e.website,'url','https://')}</div>
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir?')){DB.delete('empresas','${e.id}');closeModal();navigate('empresas')}">Excluir</button>`:''}</div>
+      <div class="flex gap-2"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEmpresa('${e.id||''}')">Salvar</button></div>
+    </div>
+  </div>`
+}
+function saveEmpresa(id){
+  const g=id=>document.getElementById(id)?.value?.trim()
+  const data={razaoSocial:g('e-razao'),nomeFantasia:g('e-fantasia'),cnpj:g('e-cnpj'),segmento:g('e-segmento'),telefone:g('e-tel'),email:g('e-email'),logradouro:g('e-logra'),numero:g('e-num'),cidade:g('e-cidade'),estado:g('e-estado'),website:g('e-site')}
+  if(!data.razaoSocial){alert('Razão Social é obrigatória');return}
+  if(id) DB.update('empresas',id,data); else DB.insert('empresas',data)
+  closeModal(); navigate('empresas')
+}
+
+// ═══════════════════════════════════════════════════════
+// CLIENTES
+// ═══════════════════════════════════════════════════════
+function renderClientes(){
+  const clis=DB.all('clientes').sort((a,b)=>a.nome?.localeCompare(b.nome||'')||0)
+  return H.header('Clientes',`${clis.length} cliente(s)`,'Novo Cliente','newCliente()')+
+  (clis.length===0?`<div class="card">${H.empty('Nenhum cliente','','Novo Cliente','newCliente()')}</div>`:
+  `<div class="card overflow-hidden"><table class="w-full">
+    <thead><tr>
+      <th class="th">CNPJ / CPF</th>
+      <th class="th">Cód. T</th>
+      <th class="th">Nome / Razão Social</th>
+      <th class="th">Cidade / UF</th>
+      <th class="th">Contato</th>
+      <th class="th">Telefone</th>
+      <th class="th">Situação</th>
+      <th class="th"></th>
+    </tr></thead>
+    <tbody>${clis.map(c=>{
+      return `<tr>
+        <td class="td">
+          <p class="font-mono text-sm font-medium">${H.esc(c.cpfCnpj||'—')}</p>
+          <span class="badge ${c.tipo==='pessoa_fisica'?'bg-blue-50 text-blue-700':'bg-purple-50 text-purple-700'}" style="margin-top:2px">${c.tipo==='pessoa_fisica'?'P. Física':'P. Jurídica'}</span>
+        </td>
+        <td class="td text-gray-500 text-sm font-mono">${H.esc(c.codigoT||'—')}</td>
+        <td class="td font-medium">${H.esc(c.nome||'—')}</td>
+        <td class="td text-gray-500 text-sm">${c.cidade?`${H.esc(c.cidade)}${c.estado?' / '+H.esc(c.estado):''}` : '—'}</td>
+        <td class="td text-gray-500 text-sm">${H.esc(c.contato||'—')}</td>
+        <td class="td text-gray-500 text-sm">${H.esc(c.telefone||'—')}</td>
+        <td class="td">
+          ${c.cnpjBaixado
+            ? '<span class="badge bg-red-100 text-red-700">CNPJ Baixado</span>'
+            : '<span class="badge bg-green-100 text-green-700">Ativo</span>'}
+        </td>
+        <td class="td"><button class="btn btn-secondary btn-sm" onclick="editCliente('${c.id}')">Editar</button></td>
+      </tr>`}).join('')}
+    </tbody>
+  </table></div>`)
+}
+
+function newCliente(){openModal(formCliente({}))}
+function editCliente(id){openModal(formCliente(DB.find('clientes',id)||{}))}
+
+function formCliente(c={}){
+  const isEdit=!!c.id, unis=DB.all('unidades')
+  const isPJ=c.tipo==='pessoa_juridica'||!c.tipo
+  return `<div class="p-5" style="min-width:640px">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">${isEdit?'Editar':'Novo'} Cliente</h2>
+      <button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button>
+    </div>
+    <div class="space-y-3">
+
+      <!-- 1º CAMPO: Tipo + CNPJ com busca (ou CPF) -->
+      <div style="display:flex;gap:.75rem;align-items:flex-end">
+        <div style="width:140px;flex-shrink:0">
+          <label class="lbl">Tipo *</label>
+          <select id="c-tipo" class="inp" onchange="toggleCnpjBusca()">
+            <option value="pessoa_juridica" ${isPJ?'selected':''}>Pessoa Jurídica</option>
+            <option value="pessoa_fisica" ${c.tipo==='pessoa_fisica'?'selected':''}>Pessoa Física</option>
+          </select>
+        </div>
+        <!-- CNPJ (PJ) -->
+        <div id="bloco-cnpj" style="flex:1;${isPJ?'':'display:none'}">
+          <label class="lbl">CNPJ</label>
+          <div style="display:flex;gap:.4rem">
+            <input id="c-doc" class="inp" value="${H.esc(c.cpfCnpj||'')}" placeholder="00.000.000/0000-00"
+              style="flex:1" maxlength="18"
+              oninput="this.value=maskCNPJ(this.value)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();buscarCNPJ()}">
+            <button id="btn-buscar-cnpj" class="btn btn-secondary" onclick="buscarCNPJ()"
+              style="white-space:nowrap;flex-shrink:0;gap:.35rem" title="Consultar Receita Federal">
+              <svg style="width:.9rem;height:.9rem;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              Buscar na Receita
+            </button>
+          </div>
+          <div id="cnpj-status" style="font-size:.75rem;margin-top:.2rem;min-height:1rem"></div>
+        </div>
+        <!-- CPF (PF) -->
+        <div id="bloco-cpf" style="flex:1;${isPJ?'display:none':''}">
+          <label class="lbl">CPF</label>
+          <input id="c-cpf" class="inp" value="${H.esc(!isPJ?c.cpfCnpj||'':'')}" placeholder="000.000.000-00" maxlength="14">
+        </div>
+      </div>
+
+      <!-- Código T + Nome / Razão Social -->
+      <div style="display:flex;gap:.75rem">
+        <div style="width:140px;flex-shrink:0">
+          <label class="lbl">Código T</label>
+          <input id="c-codigoT" class="inp" value="${H.esc(c.codigoT||'')}" placeholder="T-0000" style="font-family:monospace">
+        </div>
+        <div style="flex:1">
+          <label class="lbl">Nome / Razão Social *</label>
+          <input id="c-nome" class="inp" value="${H.esc(c.nome||'')}" placeholder="Preenchido automaticamente pela busca ou informe manualmente">
+        </div>
+      </div>
+
+      <!-- Endereço + Complemento -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="col-span-2">
+          <label class="lbl">Endereço</label>
+          <input id="c-endereco" class="inp" value="${H.esc(c.endereco||'')}" placeholder="Rua, Av., número...">
+        </div>
+        <div>
+          <label class="lbl">Complemento</label>
+          <input id="c-complemento" class="inp" value="${H.esc(c.complemento||'')}" placeholder="Sala, Andar...">
+        </div>
+      </div>
+
+      <!-- Cidade + Estado -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="col-span-2">
+          <label class="lbl">Cidade</label>
+          <input id="c-cidade" class="inp" value="${H.esc(c.cidade||'')}">
+        </div>
+        <div>
+          <label class="lbl">Estado (UF)</label>
+          <select id="c-estado" class="inp">
+            <option value="">—</option>
+            ${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf=>`<option value="${uf}" ${c.estado===uf?'selected':''}>${uf}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- Contato + Telefone -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Nome do Contato</label>
+          <input id="c-contato" class="inp" value="${H.esc(c.contato||'')}" placeholder="Pessoa de referência">
+        </div>
+        <div>
+          <label class="lbl">Telefone</label>
+          <input id="c-tel" class="inp" value="${H.esc(c.telefone||'')}" placeholder="(00) 00000-0000">
+        </div>
+      </div>
+
+      <!-- E-mail + Unidade -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">E-mail</label>
+          <input id="c-email" class="inp" type="email" value="${H.esc(c.email||'')}">
+        </div>
+        <div>
+          <label class="lbl">Unidade TSM</label>
+          <select id="c-uni" class="inp">
+            <option value="">Selecione...</option>
+            ${H.selectOpts(unis,'id',u=>`${u.nome} (${u.sigla})`,c.unidadeId||'')}
+          </select>
+        </div>
+      </div>
+
+      <!-- CNPJ Baixado -->
+      <div style="background:#fff8f8;border:1px solid #fecaca;border-radius:.5rem;padding:.75rem;display:flex;align-items:center;gap:.625rem">
+        <input type="checkbox" id="c-cnpj-baixado" ${c.cnpjBaixado?'checked':''} style="width:1rem;height:1rem;cursor:pointer">
+        <div>
+          <span style="font-size:.875rem;font-weight:500;color:#991b1b">CNPJ Baixado / Inativo na Receita Federal</span>
+          <p style="font-size:.75rem;color:#b91c1c;margin:.1rem 0 0">Marque se a empresa está com o CNPJ encerrado ou inapto</p>
+        </div>
+      </div>
+
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir este cliente?')){DB.delete('clientes','${c.id}');closeModal();navigate('clientes')}">Excluir</button>`:''}</div>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCliente('${c.id||''}')">Salvar</button>
+      </div>
+    </div>
+  </div>`
+}
+
+function toggleCnpjBusca(){
+  const isPJ=document.getElementById('c-tipo')?.value==='pessoa_juridica'
+  document.getElementById('bloco-cnpj').style.display=isPJ?'':'none'
+  document.getElementById('bloco-cpf').style.display=isPJ?'none':''
+}
+
+function maskCNPJ(v){
+  v=v.replace(/\D/g,'').slice(0,14)
+  if(v.length>12) v=v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/,'$1.$2.$3/$4-$5')
+  else if(v.length>8) v=v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4}).*/,'$1.$2.$3/$4')
+  else if(v.length>5) v=v.replace(/^(\d{2})(\d{3})(\d{0,3}).*/,'$1.$2.$3')
+  else if(v.length>2) v=v.replace(/^(\d{2})(\d{0,3}).*/,'$1.$2')
+  return v
+}
+
+async function buscarCNPJ(){
+  const raw=document.getElementById('c-doc')?.value||''
+  const cnpj=raw.replace(/\D/g,'')
+  const statusEl=document.getElementById('cnpj-status')
+  const btnEl=document.getElementById('btn-buscar-cnpj')
+
+  if(cnpj.length!==14){
+    statusEl.textContent='⚠ Digite um CNPJ com 14 dígitos antes de buscar.'
+    statusEl.style.color='#d97706'; return
+  }
+
+  btnEl.disabled=true
+  btnEl.textContent='Consultando...'
+  statusEl.textContent='Aguarde, consultando a Receita Federal...'
+  statusEl.style.color='#6b7280'
+
+  try{
+    const res=await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`)
+    if(!res.ok) throw new Error(res.status===404?'CNPJ não encontrado na base da Receita.':'Erro ao consultar: '+res.status)
+    const d=await res.json()
+
+    // Preencher campos automaticamente
+    const set=(id,val)=>{ const el=document.getElementById(id); if(el&&val) el.value=val }
+    set('c-nome', d.razao_social)
+    set('c-endereco', [d.logradouro, d.numero].filter(Boolean).join(', '))
+    set('c-complemento', d.complemento)
+    set('c-cidade', d.municipio)
+    if(d.uf){ const sel=document.getElementById('c-estado'); if(sel) sel.value=d.uf }
+    // Telefone: formatar DDD + número
+    if(d.ddd_telefone_1){
+      const t=d.ddd_telefone_1.replace(/\D/g,'')
+      if(t) set('c-tel', t.length>=10?`(${t.slice(0,2)}) ${t.slice(2,6)}-${t.slice(6)}`:t)
+    }
+    // CNPJ Baixado: situação diferente de ATIVA
+    const sit=(d.descricao_situacao_cadastral||d.situacao_cadastral||'').toUpperCase()
+    const isBaixado=!sit.includes('ATIVA')
+    document.getElementById('c-cnpj-baixado').checked=isBaixado
+
+    statusEl.textContent=`✓ ${d.descricao_situacao_cadastral||sit} — ${d.razao_social||''}`
+    statusEl.style.color=isBaixado?'#dc2626':'#16a34a'
+  }catch(e){
+    statusEl.textContent='✗ '+e.message
+    statusEl.style.color='#dc2626'
+  }finally{
+    btnEl.disabled=false
+    btnEl.innerHTML='<svg style="width:1rem;height:1rem;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Buscar na Receita'
+  }
+}
+
+function saveCliente(id){
+  const g=i=>document.getElementById(i)?.value?.trim()
+  const tipo=g('c-tipo')
+  const cpfCnpj=tipo==='pessoa_juridica'?g('c-doc'):g('c-cpf')
+  const data={
+    codigoT:g('c-codigoT'),
+    nome:g('c-nome'), tipo,
+    cpfCnpj,
+    endereco:g('c-endereco'),
+    complemento:g('c-complemento'),
+    cidade:g('c-cidade'),
+    estado:g('c-estado'),
+    contato:g('c-contato'),
+    telefone:g('c-tel'),
+    email:g('c-email'),
+    unidadeId:g('c-uni'),
+    cnpjBaixado:document.getElementById('c-cnpj-baixado')?.checked||false,
+    ativo:true
+  }
+  if(!data.nome){alert('Nome é obrigatório');return}
+  if(id) DB.update('clientes',id,data); else DB.insert('clientes',data)
+  closeModal(); navigate('clientes')
+}
+
+// ═══════════════════════════════════════════════════════
+// CONTATOS
+// ═══════════════════════════════════════════════════════
+function renderContatos(){
+  const ctts=DB.all('contatos').sort((a,b)=>a.nome?.localeCompare(b.nome||'')||0)
+  return H.header('Contatos',`${ctts.length} contato(s)`,'Novo Contato','newContato()')+
+  (ctts.length===0?`<div class="card">${H.empty('Nenhum contato','','Novo Contato','newContato()')}</div>`:
+  `<div class="card overflow-hidden"><table class="w-full">
+    <thead><tr><th class="th">Nome</th><th class="th">Cargo</th><th class="th">Cliente</th><th class="th">E-mail</th><th class="th">Celular</th><th class="th"></th></tr></thead>
+    <tbody>${ctts.map(c=>{
+      const cli=c.clienteId?DB.find('clientes',c.clienteId):null
+      return `<tr>
+        <td class="td font-medium">${H.esc(c.nome)}${c.principal?`<span class="ml-1 badge bg-blue-50 text-blue-700">Principal</span>`:''}</td>
+        <td class="td text-gray-500 text-sm">${H.esc(c.cargo||'—')}</td>
+        <td class="td text-gray-500 text-sm">${cli?H.esc(cli.nome):'—'}</td>
+        <td class="td text-gray-500 text-sm">${H.esc(c.email||'—')}</td>
+        <td class="td text-gray-500 text-sm">${H.esc(c.celular||'—')}</td>
+        <td class="td"><button class="btn btn-secondary btn-sm" onclick="editContato('${c.id}')">Editar</button></td>
+      </tr>`}).join('')}
+    </tbody>
+  </table></div>`)
+}
+function newContato(){openModal(formContato({}))}
+function editContato(id){openModal(formContato(DB.find('contatos',id)||{}))}
+function formContato(c={}){
+  const isEdit=!!c.id, clis=DB.all('clientes')
+  return `<div class="p-5">
+    <div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold">${isEdit?'Editar':'Novo'} Contato</h2><button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button></div>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Nome *</label><input id="ct-nome" class="inp" value="${H.esc(c.nome||'')}"></div>
+        <div><label class="lbl">Cargo / Função</label><input id="ct-cargo" class="inp" value="${H.esc(c.cargo||'')}"></div>
+      </div>
+      <div>
+        <label class="lbl">Cliente Vinculado</label>
+        <select id="ct-cli" class="inp">
+          <option value="">Nenhum</option>
+          ${H.selectOpts(clis,'id',cl=>cl.nome+(cl.cpfCnpj?' — '+cl.cpfCnpj:''),c.clienteId||'')}
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">E-mail</label><input id="ct-email" class="inp" type="email" value="${H.esc(c.email||'')}"></div>
+        <div><label class="lbl">Celular / WhatsApp</label><input id="ct-cel" class="inp" value="${H.esc(c.celular||'')}"></div>
+      </div>
+      <div><label class="lbl">Telefone</label><input id="ct-tel" class="inp" value="${H.esc(c.telefone||'')}"></div>
+      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-top:.25rem">
+        <input type="checkbox" id="ct-princ" ${c.principal?'checked':''}>
+        <span style="font-size:.875rem;color:#374151">Contato principal deste cliente</span>
+      </label>
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir?')){DB.delete('contatos','${c.id}');closeModal();navigate('contatos')}">Excluir</button>`:''}</div>
+      <div class="flex gap-2"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveContato('${c.id||''}')">Salvar</button></div>
+    </div>
+  </div>`
+}
+function saveContato(id){
+  const g=i=>document.getElementById(i)?.value?.trim()
+  const data={nome:g('ct-nome'),cargo:g('ct-cargo'),clienteId:g('ct-cli'),email:g('ct-email'),celular:g('ct-cel'),telefone:g('ct-tel'),principal:document.getElementById('ct-princ')?.checked||false}
+  if(!data.nome){alert('Nome é obrigatório');return}
+  if(id) DB.update('contatos',id,data); else DB.insert('contatos',data)
+  closeModal(); navigate('contatos')
+}
+
+// ═══════════════════════════════════════════════════════
+// CATÁLOGO
+// ═══════════════════════════════════════════════════════
+function renderCatalogo(){
+  const cat=DB.all('catalogo').sort((a,b)=>(a.categoria||'').localeCompare(b.categoria||'')||a.nome.localeCompare(b.nome||''))
+  return H.header('Catálogo de Serviços',`${cat.length} item(s)`,'Novo Item','newCatalogo()')+
+  (cat.length===0?`<div class="card">${H.empty('Catálogo vazio','','Novo Item','newCatalogo()')}</div>`:
+  `<div class="card overflow-hidden"><table class="w-full">
+    <thead><tr><th class="th">Código</th><th class="th">Serviço</th><th class="th">Categoria</th><th class="th">Tipo</th><th class="th text-right">Horas Padrão</th><th class="th text-right">Valor/h</th><th class="th text-right">Total Padrão</th><th class="th">Status</th><th class="th"></th></tr></thead>
+    <tbody>${cat.map(c=>{
+      const total=c.tipoPreco==='por_hora'?(c.horasPadrao||0)*(c.valorHora||0):(c.valorFixo||0)
+      return `<tr>
+        <td class="td font-mono text-xs text-gray-500">${H.esc(c.codigo||'—')}</td>
+        <td class="td font-medium">${H.esc(c.nome)}</td>
+        <td class="td text-gray-500 text-sm">${H.esc(c.categoria||'—')}</td>
+        <td class="td"><span class="badge bg-blue-50 text-blue-700">${c.tipoPreco==='por_hora'?'Por Hora':c.tipoPreco==='fixo'?'Fixo':'Sob Consulta'}</span></td>
+        <td class="td text-right text-gray-500">${c.horasPadrao?c.horasPadrao+'h':'—'}</td>
+        <td class="td text-right text-gray-500">${c.valorHora?H.cur(c.valorHora):'—'}</td>
+        <td class="td text-right font-semibold">${total?H.cur(total):'—'}</td>
+        <td class="td"><span class="badge ${c.ativo?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${c.ativo?'Ativo':'Inativo'}</span></td>
+        <td class="td"><button class="btn btn-secondary btn-sm" onclick="editCatalogo('${c.id}')">Editar</button></td>
+      </tr>`}).join('')}
+    </tbody>
+  </table></div>`)
+}
+function newCatalogo(){openModal(formCatalogo({}))}
+function editCatalogo(id){openModal(formCatalogo(DB.find('catalogo',id)||{}))}
+function formCatalogo(c={}){
+  const isEdit=!!c.id
+  return `<div class="p-5">
+    <div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold">${isEdit?'Editar':'Novo'} Item do Catálogo</h2><button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button></div>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Código</label><input id="cat-cod" class="inp" value="${H.esc(c.codigo||'')}" placeholder="SIGAFIN-120"></div>
+        <div><label class="lbl">Nome *</label><input id="cat-nome" class="inp" value="${H.esc(c.nome||'')}"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Categoria</label><input id="cat-cat" class="inp" value="${H.esc(c.categoria||'')}" placeholder="ERP TOTVS, Serviços..."></div>
+        <div><label class="lbl">Tipo de Preço</label>
+          <select id="cat-tipo" class="inp" onchange="toggleCatPreco()">
+            <option value="por_hora" ${c.tipoPreco==='por_hora'||!c.tipoPreco?'selected':''}>Por Hora</option>
+            <option value="fixo" ${c.tipoPreco==='fixo'?'selected':''}>Preço Fixo</option>
+            <option value="sob_consulta" ${c.tipoPreco==='sob_consulta'?'selected':''}>Sob Consulta</option>
+          </select>
+        </div>
+      </div>
+      <div id="cat-hora-fields" class="grid grid-cols-2 gap-3" style="${c.tipoPreco==='fixo'||c.tipoPreco==='sob_consulta'?'display:none':''}">
+        <div><label class="lbl">Horas Padrão</label><input id="cat-horas" class="inp" type="number" min="0" step="0.5" value="${c.horasPadrao||''}"></div>
+        <div><label class="lbl">Valor por Hora (R$)</label><input id="cat-vh" class="inp" type="number" min="0" step="0.01" value="${c.valorHora||''}"></div>
+      </div>
+      <div id="cat-fixo-field" style="${c.tipoPreco!=='fixo'?'display:none':''}">
+        <label class="lbl">Valor Fixo (R$)</label><input id="cat-vf" class="inp" type="number" min="0" step="0.01" value="${c.valorFixo||''}">
+      </div>
+      <div><label class="lbl">Descrição</label><textarea id="cat-desc" class="inp" rows="2">${H.esc(c.descricao||'')}</textarea></div>
+      <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="cat-ativo" ${c.ativo!==false?'checked':''} class="rounded"><span class="text-sm text-gray-700">Ativo (disponível nas propostas)</span></label>
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir?')){DB.delete('catalogo','${c.id}');closeModal();navigate('catalogo')}">Excluir</button>`:''}</div>
+      <div class="flex gap-2"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCatalogo('${c.id||''}')">Salvar</button></div>
+    </div>
+  </div>`
+}
+function toggleCatPreco(){
+  const t=document.getElementById('cat-tipo').value
+  document.getElementById('cat-hora-fields').style.display=t==='por_hora'?'':'none'
+  document.getElementById('cat-fixo-field').style.display=t==='fixo'?'':'none'
+}
+function saveCatalogo(id){
+  const g=i=>document.getElementById(i)?.value?.trim()
+  const data={codigo:g('cat-cod'),nome:g('cat-nome'),categoria:g('cat-cat'),tipoPreco:g('cat-tipo'),horasPadrao:parseFloat(g('cat-horas'))||0,valorHora:parseFloat(g('cat-vh'))||0,valorFixo:parseFloat(g('cat-vf'))||0,descricao:g('cat-desc'),ativo:document.getElementById('cat-ativo')?.checked||false}
+  if(!data.nome){alert('Nome é obrigatório');return}
+  if(id) DB.update('catalogo',id,data); else DB.insert('catalogo',data)
+  closeModal(); navigate('catalogo')
+}
+
+// ═══════════════════════════════════════════════════════
+// USUÁRIOS
+// ═══════════════════════════════════════════════════════
+const PERFIS=[['vendedor','Vendedor'],['arquiteto','Arquiteto de Soluções'],['gerente_unidade','Gerente da Unidade'],['gerente_geral','Gerente Geral'],['administrador','Administrador']]
+function renderUsuarios(){
+  const users=DB.all('usuarios').sort((a,b)=>a.nome?.localeCompare(b.nome||'')||0)
+  return H.header('Usuários',`${users.length} usuário(s)`,'Novo Usuário','newUsuario()')+
+  (users.length===0?`<div class="card">${H.empty('Nenhum usuário','','Novo Usuário','newUsuario()')}</div>`:
+  `<div class="card overflow-hidden"><table class="w-full">
+    <thead><tr><th class="th">Nome</th><th class="th">E-mail</th><th class="th">Perfil</th><th class="th">Unidade</th><th class="th">Status</th><th class="th"></th></tr></thead>
+    <tbody>${users.map(u=>{
+      const uni=u.unidadeId?DB.find('unidades',u.unidadeId):null
+      const perfilColors={vendedor:'bg-blue-50 text-blue-700',arquiteto:'bg-purple-50 text-purple-700',gerente_unidade:'bg-yellow-50 text-yellow-700',gerente_geral:'bg-orange-50 text-orange-700',administrador:'bg-red-50 text-red-700'}
+      return `<tr>
+        <td class="td"><div class="flex items-center gap-2"><div class="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-blue-700 text-xs font-bold">${(u.nome||'?').charAt(0).toUpperCase()}</span></div><span class="font-medium">${H.esc(u.nome)}</span></div></td>
+        <td class="td text-gray-500 text-sm">${H.esc(u.email||'—')}</td>
+        <td class="td"><span class="badge ${perfilColors[u.perfil]||'bg-gray-100 text-gray-700'}">${H.perfil(u.perfil)}</span></td>
+        <td class="td">${uni?`<span class="badge bg-gray-100 text-gray-700">${H.esc(uni.sigla)}</span>`:'—'}</td>
+        <td class="td"><span class="badge ${u.ativo?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${u.ativo?'Ativo':'Inativo'}</span></td>
+        <td class="td"><button class="btn btn-secondary btn-sm" onclick="editUsuario('${u.id}')">Editar</button></td>
+      </tr>`}).join('')}
+    </tbody>
+  </table></div>`)
+}
+function newUsuario(){openModal(formUsuario({}))}
+function editUsuario(id){openModal(formUsuario(DB.find('usuarios',id)||{}))}
+function formUsuario(u={}){
+  const isEdit=!!u.id, unis=DB.all('unidades')
+  return `<div class="p-5">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">${isEdit?'Editar':'Novo'} Usuário</h2>
+      <button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button>
+    </div>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Nome *</label><input id="u-nome" class="inp" value="${H.esc(u.nome||'')}"></div>
+        <div><label class="lbl">E-mail *</label><input id="u-email" class="inp" type="email" value="${H.esc(u.email||'')}"></div>
+      </div>
+      <div style="border:1px solid #e5e7eb;border-radius:.5rem;padding:.875rem;background:#f9fafb">
+        <p style="font-size:.78rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin:0 0 .6rem">${isEdit?'Alterar Senha (deixe em branco para manter)':'Senha de Acesso'}</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="lbl">${isEdit?'Nova Senha':'Senha *'}</label><input id="u-senha" class="inp" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+          <div><label class="lbl">Confirmar Senha</label><input id="u-senha2" class="inp" type="password" placeholder="••••••••" autocomplete="new-password"></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Perfil *</label><select id="u-perfil" class="inp">${PERFIS.map(([v,l])=>`<option value="${v}" ${u.perfil===v?'selected':''}>${l}</option>`).join('')}</select></div>
+        <div><label class="lbl">Unidade</label><select id="u-uni" class="inp"><option value="">Todas as unidades</option>${H.selectOpts(unis,'id',un=>`${un.nome} (${un.sigla})`,u.unidadeId||'')}</select></div>
+      </div>
+      <div><label class="lbl">Telefone</label><input id="u-tel" class="inp" value="${H.esc(u.telefone||'')}"></div>
+      <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+        <input type="checkbox" id="u-ativo" ${u.ativo!==false?'checked':''}>
+        <span style="font-size:.875rem;color:#374151">Usuário ativo</span>
+      </label>
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir este usuário?')){DB.delete('usuarios','${u.id}');closeModal();navigate('usuarios')}">Excluir</button>`:''}</div>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveUsuario('${u.id||''}',${isEdit})">Salvar</button>
+      </div>
+    </div>
+  </div>`
+}
+
+function saveUsuario(id, isEdit){
+  const g=i=>document.getElementById(i)?.value?.trim()
+  const nome=g('u-nome'), email=g('u-email'), senha=g('u-senha'), senha2=g('u-senha2')
+  if(!nome){alert('Nome é obrigatório');return}
+  if(!email){alert('E-mail é obrigatório');return}
+  // Validar senha
+  if(!isEdit && !senha){alert('Senha é obrigatória para novo usuário');return}
+  if(senha && senha!==senha2){alert('As senhas não coincidem');return}
+  if(senha && senha.length<4){alert('Senha deve ter no mínimo 4 caracteres');return}
+  // Verificar e-mail duplicado
+  const existing=DB.all('usuarios').find(u=>u.email?.toLowerCase()===email.toLowerCase() && u.id!==id)
+  if(existing){alert('Este e-mail já está cadastrado');return}
+
+  const data={nome,email,perfil:g('u-perfil'),unidadeId:g('u-uni'),telefone:g('u-tel'),ativo:document.getElementById('u-ativo')?.checked||false}
+  if(senha) data.senha=senha  // só atualiza senha se foi preenchida
+
+  if(id) DB.update('usuarios',id,data); else DB.insert('usuarios',data)
+  closeModal(); navigate('usuarios')
+}
+
+// ═══════════════════════════════════════════════════════
+// UNIDADES
+// ═══════════════════════════════════════════════════════
+function renderUnidades(){
+  const unis=DB.all('unidades')
+  return H.header('Unidades','Unidades operacionais TSM','Nova Unidade','newUnidade()')+
+  `<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    ${unis.map(u=>`
+      <div class="card p-5 cursor-pointer hover:shadow-md transition-shadow" onclick="editUnidade('${u.id}')">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div><p class="font-semibold">${H.esc(u.nome)}</p><span class="badge bg-blue-100 text-blue-700 mt-1">${H.esc(u.sigla)}</span>${u.descricao?`<p class="text-sm text-gray-500 mt-1">${H.esc(u.descricao)}</p>`:''}</div>
+        </div>
+        <div class="mt-3 flex items-center justify-between text-xs text-gray-400">
+          <span>${u.ativo?'✓ Ativa':'✗ Inativa'}</span><span class="text-blue-600">Editar →</span>
+        </div>
+      </div>`).join('')}
+    ${unis.length===0?`<div class="col-span-3 card">${H.empty('Nenhuma unidade','','Nova Unidade','newUnidade()')}</div>`:''}
+  </div>`
+}
+function newUnidade(){openModal(formUnidade({}))}
+function editUnidade(id){openModal(formUnidade(DB.find('unidades',id)||{}))}
+function formUnidade(u={}){
+  const isEdit=!!u.id
+  return `<div class="p-5">
+    <div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold">${isEdit?'Editar':'Nova'} Unidade</h2><button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button></div>
+    <div class="space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Nome *</label><input id="un-nome" class="inp" value="${H.esc(u.nome||'')}" placeholder="Serra do Mar"></div>
+        <div><label class="lbl">Sigla *</label><input id="un-sigla" class="inp" value="${H.esc(u.sigla||'')}" placeholder="SDM" style="text-transform:uppercase" maxlength="10"></div>
+      </div>
+      <div><label class="lbl">Descrição</label><textarea id="un-desc" class="inp" rows="2">${H.esc(u.descricao||'')}</textarea></div>
+      <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="un-ativo" ${u.ativo!==false?'checked':''} class="rounded"><span class="text-sm text-gray-700">Unidade ativa</span></label>
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir?')){DB.delete('unidades','${u.id}');closeModal();navigate('unidades')}">Excluir</button>`:''}</div>
+      <div class="flex gap-2"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveUnidade('${u.id||''}')">Salvar</button></div>
+    </div>
+  </div>`
+}
+function saveUnidade(id){
+  const g=i=>document.getElementById(i)?.value?.trim()
+  const data={nome:g('un-nome'),sigla:(g('un-sigla')||'').toUpperCase(),descricao:g('un-desc'),ativo:document.getElementById('un-ativo')?.checked||false}
+  if(!data.nome){alert('Nome é obrigatório');return}
+  if(id) DB.update('unidades',id,data); else DB.insert('unidades',data)
+  closeModal(); navigate('unidades')
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+seedIfEmpty()
+if(AUTH.isLogged()){
+  showApp()
+} else {
+  showLogin()
+  // Foco no campo email após carregar
+  setTimeout(()=>document.getElementById('login-email')?.focus(),100)
+}
+</script>
+</body>
+</html>
