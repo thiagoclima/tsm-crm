@@ -270,11 +270,16 @@ const DB = {
   insert(k,obj){ const d=this.get(k); const r={...obj,id:this.id(),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; d.push(r); this.set(k,d); return r },
   update(k,id,obj){ const d=this.get(k).map(x=>x.id===id?{...x,...obj,updatedAt:new Date().toISOString()}:x); this.set(k,d); return d.find(x=>x.id===id) },
   delete(k,id){ this.set(k,this.get(k).filter(x=>x.id!==id)) },
-  nextPropostaNum(){
+  nextPropostaNum(sigla){
+    const now=new Date()
+    const yy=now.getFullYear().toString().slice(2)
+    const mm=String(now.getMonth()+1).padStart(2,'0')
+    const prefixMes=`TSM${sigla||''}-${yy}${mm}-`
+    // Conta propostas já criadas no mesmo mês/ano (independente da unidade)
     const props=this.get('propostas')
-    const year=new Date().getFullYear().toString().slice(2)
-    const seq=(props.length+1).toString().padStart(4,'0')
-    return `TSM-${year}-${seq}`
+    const noMes=props.filter(p=>p.numero&&p.numero.includes(`-${yy}${mm}-`)).length
+    const seq=(noMes+1).toString().padStart(4,'0')
+    return `${prefixMes}${seq}`
   }
 }
 
@@ -290,16 +295,16 @@ function seedIfEmpty(){
   }
   if(DB.get('catalogo').length===0){
     const itens=[
-      {codigo:'SIGAFIN-120',nome:'SIGAFIN — Financeiro',categoria:'ERP TOTVS',horasPadrao:120,valorHora:180,tipoPreco:'por_hora',ativo:true},
-      {codigo:'SIGAEST-80', nome:'SIGAEST — Estoque',   categoria:'ERP TOTVS',horasPadrao:80, valorHora:180,tipoPreco:'por_hora',ativo:true},
-      {codigo:'SIGACOM-100',nome:'SIGACOM — Compras',   categoria:'ERP TOTVS',horasPadrao:100,valorHora:180,tipoPreco:'por_hora',ativo:true},
-      {codigo:'SIGAFAT-80', nome:'SIGAFAT — Faturamento',categoria:'ERP TOTVS',horasPadrao:80,valorHora:180,tipoPreco:'por_hora',ativo:true},
-      {codigo:'TREIN-USU',  nome:'Treinamento de Usuários',categoria:'Serviços',horasPadrao:16,valorHora:150,tipoPreco:'por_hora',ativo:true},
-      {codigo:'MIG-DADOS',  nome:'Migração de Dados',   categoria:'Técnico',  horasPadrao:40, valorHora:200,tipoPreco:'por_hora',ativo:true},
-      {codigo:'CONS-NEG',   nome:'Consultoria em Negócios',categoria:'Consultoria',horasPadrao:8,valorHora:250,tipoPreco:'por_hora',ativo:true},
-      {codigo:'CUSTOM-INT', nome:'Customização e Integrações',categoria:'Técnico',horasPadrao:20,valorHora:200,tipoPreco:'por_hora',ativo:true},
-      {codigo:'SUPORTE-M',  nome:'Suporte Mensal',       categoria:'Suporte',  horasPadrao:0,  valorHora:0,  valorFixo:2500,tipoPreco:'fixo',ativo:true},
-      {codigo:'IMPLANT-GEN',nome:'Implantação Geral',    categoria:'Serviços', horasPadrao:40, valorHora:170,tipoPreco:'por_hora',ativo:true},
+      {nome:'Implantação Financeiro',       produto:'ERP Protheus',esforcoMin:80, esforcoMax:160,valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Implantação Estoque',          produto:'ERP Protheus',esforcoMin:60, esforcoMax:120,valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Implantação Compras',          produto:'ERP Protheus',esforcoMin:80, esforcoMax:140,valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Implantação Faturamento',      produto:'ERP Protheus',esforcoMin:60, esforcoMax:100,valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Implantação RH / Folha',       produto:'RM',          esforcoMin:80, esforcoMax:160,valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Implantação Gestão de Obras',  produto:'RM',          esforcoMin:100,esforcoMax:200,valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Implantação Workflow',         produto:'FLUIG',       esforcoMin:40, esforcoMax:80, valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Implantação Portal Corporativo',produto:'FLUIG',      esforcoMin:60, esforcoMax:120,valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Treinamento de Usuários',      produto:'ERP Protheus',esforcoMin:16, esforcoMax:32, valorHora:175,tipoPreco:'por_hora',ativo:true},
+      {nome:'Migração de Dados',            produto:'ERP Protheus',esforcoMin:40, esforcoMax:80, valorHora:175,tipoPreco:'por_hora',ativo:true},
     ]
     itens.forEach(i=>DB.insert('catalogo',i))
   }
@@ -516,15 +521,20 @@ function formOportunidade(o={}){
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div><label class="lbl">Cliente *</label>
-          <select id="op-cliente" class="inp" onchange="editOportunidade && navigate && undefined">
+          <select id="op-cliente" class="inp" onchange="onClienteOportunidadeChange()">
             <option value="">Selecione o cliente...</option>
             ${H.selectOpts(clis,'id',c=>c.nome+(c.cpfCnpj?' — '+c.cpfCnpj:''),o.clienteId||'')}
           </select></div>
-        <div><label class="lbl">Contato do Cliente</label>
+        <div>
+          <label class="lbl" style="display:flex;align-items:center;gap:.35rem">
+            Contato
+            <span id="op-contato-hint" style="font-size:.7rem;color:#f59e0b;display:none">★ principal pré-selecionado</span>
+          </label>
           <select id="op-contato" class="inp">
             <option value="">Nenhum</option>
-            ${H.selectOpts(ctts,'id',c=>c.nome+(c.cargo?' ('+c.cargo+')':''),o.contatoId||'')}
-          </select></div>
+            ${renderOpContatoOpts(o.clienteId||'', o.contatoId||'')}
+          </select>
+        </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div><label class="lbl">Vendedor Responsável</label>
@@ -551,6 +561,48 @@ function formOportunidade(o={}){
       </div>
     </div>
   </div>`
+}
+
+function renderOpContatoOpts(clienteId, selectedId){
+  if(!clienteId) return ''
+  const ctts=DB.all('contatos').filter(c=>c.clienteId===clienteId)
+  if(ctts.length===0) return ''
+  // Principal primeiro
+  ctts.sort((a,b)=>(b.principal?1:0)-(a.principal?1:0))
+  return ctts.map(c=>{
+    const label=(c.principal?'★ ':'') + c.nome + (c.cargo?' — '+c.cargo:'')
+    return `<option value="${c.id}" ${c.id===selectedId?'selected':''}>${label}</option>`
+  }).join('')
+}
+
+function onClienteOportunidadeChange(){
+  const clienteId=document.getElementById('op-cliente')?.value||''
+  const sel=document.getElementById('op-contato')
+  const hint=document.getElementById('op-contato-hint')
+  if(!sel) return
+
+  // Recarrega as opções filtradas pelo cliente
+  sel.innerHTML='<option value="">Nenhum</option>'+renderOpContatoOpts(clienteId,'')
+
+  // Pré-seleciona o contato principal se existir
+  if(clienteId){
+    const principal=DB.all('contatos').find(c=>c.clienteId===clienteId&&c.principal)
+    if(principal){
+      sel.value=principal.id
+      if(hint) hint.style.display='inline'
+    } else {
+      if(hint) hint.style.display='none'
+    }
+
+    // Auto-preenche vendedor a partir do cliente
+    const cli=DB.find('clientes',clienteId)
+    const selVendedor=document.getElementById('op-vendedor')
+    if(cli&&cli.vendedorId&&selVendedor){
+      selVendedor.value=cli.vendedorId
+    }
+  } else {
+    if(hint) hint.style.display='none'
+  }
 }
 
 function saveOportunidade(id){
@@ -621,10 +673,25 @@ function editProposta(id){
 }
 
 let _propostaItens=[]
+let _clienteContatos=[]   // contatos em memória enquanto o form de cliente está aberto
 
+function _resolverImpostoProposta(p, ops){
+  // Se a proposta já tem impostoPercentual salvo, usa ele
+  if(p.impostoPercentual!=null) return p.impostoPercentual
+  // Senão, resolve via oportunidade → unidade
+  if(p.oportunidadeId){
+    const op=(ops||DB.all('oportunidades')).find(o=>o.id===p.oportunidadeId)
+    if(op&&op.unidadeId){
+      const uni=DB.find('unidades',op.unidadeId)
+      if(uni&&uni.imposto) return uni.imposto
+    }
+  }
+  return 0
+}
 function formProposta(p={},ops,cat){
   _propostaItens=p.itens?JSON.parse(JSON.stringify(p.itens)):[]
   const isEdit=!!p.id
+  const impostoInicial=_resolverImpostoProposta(p,ops)
 
   return `
   <div class="p-5" style="min-width:640px">
@@ -661,10 +728,16 @@ function formProposta(p={},ops,cat){
       <!-- Totais -->
       <div class="px-3 py-3 bg-gray-50 border-t border-gray-200">
         <div class="flex justify-end">
-          <div class="w-60 space-y-1 text-sm">
+          <div class="w-72 space-y-1 text-sm">
             <div class="flex justify-between"><span class="text-gray-500">Subtotal:</span><span id="p-subtotal" class="font-medium">R$ 0,00</span></div>
             <div class="flex items-center justify-between gap-2"><span class="text-gray-500 flex-shrink-0">Desconto geral %:</span>
               <input id="p-desc-geral" class="inp text-right w-20 py-0.5" type="number" min="0" max="100" step="0.5" value="${p.descontoGeral||0}" oninput="recalcTotais()"></div>
+            <div class="flex justify-between"><span class="text-gray-500">Subtotal c/ desconto:</span><span id="p-subtotal-desc" class="font-medium">R$ 0,00</span></div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-gray-500 flex-shrink-0">Imposto %:</span>
+              <input id="p-imposto" class="inp text-right w-20 py-0.5" type="number" min="0" max="100" step="0.01" value="${impostoInicial||0}" oninput="recalcTotais()" title="Pré-preenchido com o imposto da unidade. Editável por proposta.">
+            </div>
+            <div class="flex justify-between text-orange-700"><span>(+) Imposto:</span><span id="p-valor-imposto">R$ 0,00</span></div>
             <div class="flex justify-between font-bold border-t border-gray-200 pt-1"><span>TOTAL:</span><span id="p-total" class="text-blue-700">R$ 0,00</span></div>
           </div>
         </div>
@@ -721,8 +794,8 @@ function applyFromCatalog(idx,catId){
   if(!cat)return
   _propostaItens[idx].catalogoId=catId
   _propostaItens[idx].descricao=cat.nome
-  _propostaItens[idx].horas=cat.tipoPreco==='por_hora'?(cat.horasPadrao||0):1
-  _propostaItens[idx].valorHora=cat.tipoPreco==='por_hora'?(cat.valorHora||0):(cat.valorFixo||0)
+  _propostaItens[idx].horas=cat.tipoPreco==='por_hora'?(cat.esforcoMin??cat.horasPadrao??0):1
+  _propostaItens[idx].valorHora=cat.tipoPreco==='por_hora'?(cat.valorHora||175):(cat.valorFixo||0)
   _propostaItens[idx].descontoPercentual=0
   refreshItensTable()
 }
@@ -737,15 +810,19 @@ function calcItemTotal(item){
 function recalcTotais(){
   const subtotal=_propostaItens.reduce((a,i)=>a+calcItemTotal(i),0)
   const desc=parseFloat(document.getElementById('p-desc-geral')?.value)||0
-  const total=subtotal*(1-desc/100)
-  const s=document.getElementById('p-subtotal')
-  const t=document.getElementById('p-total')
-  if(s)s.textContent=H.cur(subtotal)
-  if(t)t.textContent=H.cur(total)
+  const subtotalDesc=subtotal*(1-desc/100)
+  const imposto=parseFloat(document.getElementById('p-imposto')?.value)||0
+  const valorImposto=subtotalDesc*(imposto/100)
+  const total=subtotalDesc+valorImposto
+  const el=id=>document.getElementById(id)
+  if(el('p-subtotal'))     el('p-subtotal').textContent=H.cur(subtotal)
+  if(el('p-subtotal-desc'))el('p-subtotal-desc').textContent=H.cur(subtotalDesc)
+  if(el('p-valor-imposto'))el('p-valor-imposto').textContent=H.cur(valorImposto)
+  if(el('p-total'))        el('p-total').textContent=H.cur(total)
   // Atualizar totais por linha
   _propostaItens.forEach((item,i)=>{
-    const el=document.querySelector(`.item-total-${i}`)
-    if(el)el.textContent=H.cur(calcItemTotal(item))
+    const row=document.querySelector(`.item-total-${i}`)
+    if(row)row.textContent=H.cur(calcItemTotal(item))
   })
 }
 
@@ -766,7 +843,10 @@ function removePropostaItem(i){
 function saveProposta(id, andClose=true){
   const subtotal=_propostaItens.reduce((a,i)=>a+calcItemTotal(i),0)
   const descGeral=parseFloat(document.getElementById('p-desc-geral')?.value)||0
+  const impostoPercentual=parseFloat(document.getElementById('p-imposto')?.value)||0
   const valorDesconto=subtotal*(descGeral/100)
+  const subtotalDesc=subtotal-valorDesconto
+  const valorImposto=subtotalDesc*(impostoPercentual/100)
   const data={
     oportunidadeId:document.getElementById('p-op').value,
     status:document.getElementById('p-status').value,
@@ -774,14 +854,28 @@ function saveProposta(id, andClose=true){
     condicoesPagamento:document.getElementById('p-cond').value.trim(),
     observacoes:document.getElementById('p-obs').value.trim(),
     descontoGeral:descGeral,
+    impostoPercentual,
     valorSubtotal:subtotal,
     valorDesconto,
-    valorTotal:subtotal-valorDesconto,
+    valorImposto,
+    valorTotal:subtotalDesc+valorImposto,
     itens:JSON.parse(JSON.stringify(_propostaItens)),
   }
   let saved
   if(id){ saved=DB.update('propostas',id,data) }
-  else { data.numero=DB.nextPropostaNum(); saved=DB.insert('propostas',data) }
+  else {
+    // Resolve sigla da unidade via oportunidade vinculada
+    let sigla=''
+    if(data.oportunidadeId){
+      const op=DB.find('oportunidades',data.oportunidadeId)
+      if(op&&op.unidadeId){
+        const uni=DB.find('unidades',op.unidadeId)
+        if(uni&&uni.sigla) sigla=uni.sigla.toUpperCase()
+      }
+    }
+    data.numero=DB.nextPropostaNum(sigla)
+    saved=DB.insert('propostas',data)
+  }
   if(andClose){ closeModal(); navigate('propostas') }
   return saved
 }
@@ -877,6 +971,7 @@ function viewProposta(id){
             <tfoot>
               <tr style="background:#f9fafb"><td colspan="4" style="padding:7px 10px;text-align:right;color:#6b7280;border-top:1px solid #e5e7eb">Subtotal:</td><td style="padding:7px 10px;text-align:right;font-weight:600;border-top:1px solid #e5e7eb">${H.cur(p.valorSubtotal)}</td></tr>
               ${p.descontoGeral>0?`<tr style="background:#f9fafb"><td colspan="4" style="padding:7px 10px;text-align:right;color:#dc2626;border-top:1px solid #e5e7eb">Desconto (${p.descontoGeral}%):</td><td style="padding:7px 10px;text-align:right;color:#dc2626;font-weight:600;border-top:1px solid #e5e7eb">— ${H.cur(p.valorDesconto)}</td></tr>`:''}
+              ${p.impostoPercentual>0?`<tr style="background:#fff7ed"><td colspan="4" style="padding:7px 10px;text-align:right;color:#c2410c;border-top:1px solid #e5e7eb">(+) Imposto (${p.impostoPercentual}%):</td><td style="padding:7px 10px;text-align:right;color:#c2410c;font-weight:600;border-top:1px solid #e5e7eb">${H.cur(p.valorImposto||0)}</td></tr>`:''}
               <tr style="background:#1d4ed8;color:#fff"><td colspan="4" style="padding:9px 10px;text-align:right;font-weight:700">TOTAL:</td><td style="padding:9px 10px;text-align:right;font-weight:900;font-size:15px">${H.cur(p.valorTotal)}</td></tr>
             </tfoot>
           </table>
@@ -977,6 +1072,7 @@ function downloadPDF(id){
     foot:[
       ['','','','Subtotal',H.cur(p.valorSubtotal)],
       ...(p.descontoGeral>0?[['','','',`Desconto (${p.descontoGeral}%)`,`— ${H.cur(p.valorDesconto)}`]]:[]),
+      ...(p.impostoPercentual>0?[['','','',`(+) Imposto (${p.impostoPercentual}%)`,H.cur(p.valorImposto||0)]]:[]),
       ['','','','TOTAL',H.cur(p.valorTotal)],
     ],
     headStyles:{fillColor:azul,textColor:branco,fontSize:8,fontStyle:'bold'},
@@ -1112,7 +1208,12 @@ function editCliente(id){openModal(formCliente(DB.find('clientes',id)||{}))}
 
 function formCliente(c={}){
   const isEdit=!!c.id, unis=DB.all('unidades')
+  const vendedores=DB.all('usuarios').filter(u=>u.ativo!==false&&['vendedor','gerente_unidade','gerente_geral','administrador'].includes(u.perfil))
   const isPJ=c.tipo==='pessoa_juridica'||!c.tipo
+  // Inicializa lista em memória de contatos para este cliente
+  _clienteContatos = isEdit
+    ? DB.all('contatos').filter(ct=>ct.clienteId===c.id).map(ct=>({...ct,_id:ct.id}))
+    : []
   return `<div class="p-5" style="min-width:640px">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-bold">${isEdit?'Editar':'Novo'} Cliente</h2>
@@ -1218,12 +1319,64 @@ function formCliente(c={}){
         </div>
       </div>
 
+      <!-- Vendedor -->
+      <div>
+        <label class="lbl">Vendedor Responsável</label>
+        <select id="c-vendedor" class="inp">
+          <option value="">Nenhum</option>
+          ${vendedores.map(u=>`<option value="${u.id}"${u.id===c.vendedorId?' selected':''}>${H.esc(u.nome)} — ${H.esc(H.perfil(u.perfil))}</option>`).join('')}
+        </select>
+      </div>
+
       <!-- CNPJ Baixado -->
       <div style="background:#fff8f8;border:1px solid #fecaca;border-radius:.5rem;padding:.75rem;display:flex;align-items:center;gap:.625rem">
         <input type="checkbox" id="c-cnpj-baixado" ${c.cnpjBaixado?'checked':''} style="width:1rem;height:1rem;cursor:pointer">
         <div>
           <span style="font-size:.875rem;font-weight:500;color:#991b1b">CNPJ Baixado / Inativo na Receita Federal</span>
           <p style="font-size:.75rem;color:#b91c1c;margin:.1rem 0 0">Marque se a empresa está com o CNPJ encerrado ou inapto</p>
+        </div>
+      </div>
+
+      <!-- Contatos vinculados (funciona para clientes novos e existentes) -->
+      <div style="border:1px solid #e5e7eb;border-radius:.5rem;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .875rem;background:#f9fafb;border-bottom:1px solid #e5e7eb">
+          <span style="font-size:.8rem;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.04em">Contatos</span>
+          <button class="btn btn-secondary" style="padding:.25rem .65rem;font-size:.78rem" onclick="_abrirAddContato()">+ Adicionar</button>
+        </div>
+        <div id="lista-ct">${_ctListHTML()}</div>
+        <!-- Painel de adição (oculto por padrão) -->
+        <div id="ct-add-panel" style="display:none;padding:.75rem;border-top:1px solid #e5e7eb;background:#f9fafb">
+          <p style="font-size:.78rem;font-weight:600;color:#374151;margin:0 0 .4rem">Vincular contato existente:</p>
+          <div style="display:flex;gap:.5rem;margin-bottom:.65rem">
+            <select id="ct-sel-exist" class="inp" style="flex:1;font-size:.82rem">
+              <option value="">Selecione um contato cadastrado...</option>
+            </select>
+            <button class="btn btn-secondary" style="padding:.35rem .75rem;font-size:.8rem;white-space:nowrap" onclick="_vincularCtExistente()">Vincular</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0;color:#9ca3af;font-size:.78rem">
+            <div style="flex:1;height:1px;background:#e5e7eb"></div><span>ou</span><div style="flex:1;height:1px;background:#e5e7eb"></div>
+          </div>
+          <button class="btn btn-secondary" style="width:100%;font-size:.82rem;padding:.4rem;justify-content:center" onclick="_mostrarFormNovoContato()">+ Criar novo contato</button>
+          <!-- Mini-formulário de novo contato -->
+          <div id="ct-mini-form" style="display:none;margin-top:.65rem;padding:.75rem;background:#fff;border:1px solid #e5e7eb;border-radius:.375rem">
+            <p style="font-size:.8rem;font-weight:600;color:#374151;margin:0 0 .5rem">Novo contato</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+              <div><label class="lbl">Nome *</label><input id="ctn-nome" class="inp" placeholder="Nome completo"></div>
+              <div><label class="lbl">Cargo</label><input id="ctn-cargo" class="inp" placeholder="Cargo / Função"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+              <div><label class="lbl">E-mail</label><input id="ctn-email" class="inp" type="email"></div>
+              <div><label class="lbl">Celular / WhatsApp</label><input id="ctn-cel" class="inp" placeholder="(00) 90000-0000"></div>
+            </div>
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;padding:.4rem;background:#fffbeb;border-radius:.375rem;border:1px solid #fde68a;margin-bottom:.5rem">
+              <input type="checkbox" id="ctn-princ">
+              <span style="font-size:.82rem;color:#92400e">★ Contato principal — sugerido automaticamente nas propostas</span>
+            </label>
+            <div style="display:flex;justify-content:flex-end;gap:.5rem">
+              <button class="btn btn-secondary" style="font-size:.8rem;padding:.3rem .65rem" onclick="document.getElementById('ct-mini-form').style.display='none'">Cancelar</button>
+              <button class="btn btn-primary" style="font-size:.8rem;padding:.3rem .65rem" onclick="_salvarNovoContato()">Adicionar à lista</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1236,6 +1389,109 @@ function formCliente(c={}){
       </div>
     </div>
   </div>`
+}
+
+// ─── Funções de contatos em memória (form de cliente) ───────────────────────
+
+function _ctListHTML(){
+  if(_clienteContatos.length===0)
+    return `<p style="padding:.875rem;font-size:.82rem;color:#9ca3af;text-align:center">Nenhum contato adicionado. Clique em "+ Adicionar" acima.</p>`
+  return _clienteContatos.map((ct,idx)=>`
+    <div style="display:flex;align-items:center;gap:.625rem;padding:.55rem .875rem;${idx<_clienteContatos.length-1?'border-bottom:1px solid #f3f4f6':''}">
+      <button onclick="_toggleCtPrincipal(${idx})"
+        title="${ct.principal?'Remover como principal':'Definir como contato principal'}"
+        style="background:none;border:none;cursor:pointer;padding:0;font-size:1.05rem;line-height:1;flex-shrink:0;color:${ct.principal?'#f59e0b':'#d1d5db'}">
+        ${ct.principal?'★':'☆'}
+      </button>
+      <div style="flex:1;min-width:0">
+        <p style="font-size:.875rem;font-weight:${ct.principal?'600':'400'};color:#111827;margin:0">
+          ${H.esc(ct.nome)}
+          ${ct.principal?'<span style="font-size:.7rem;color:#f59e0b;font-weight:600;margin-left:.3rem">Principal</span>':''}
+        </p>
+        <p style="font-size:.75rem;color:#6b7280;margin:.05rem 0 0">
+          ${[ct.cargo,ct.email,ct.celular||ct.telefone].filter(Boolean).map(H.esc).join(' · ')||'—'}
+        </p>
+      </div>
+      <button style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:1.2rem;padding:0 .25rem;line-height:1;flex-shrink:0"
+        onclick="_removeFromCtList(${idx})" title="Remover contato">&times;</button>
+    </div>
+  `).join('')
+}
+
+function _renderCtList(){
+  const el=document.getElementById('lista-ct')
+  if(el) el.innerHTML=_ctListHTML()
+}
+
+function _toggleCtPrincipal(idx){
+  if(!_clienteContatos[idx]) return
+  const novoValor=!_clienteContatos[idx].principal
+  _clienteContatos.forEach((c,i)=>c.principal = (i===idx ? novoValor : false))
+  _renderCtList()
+}
+
+function _removeFromCtList(idx){
+  _clienteContatos.splice(idx,1)
+  _renderCtList()
+}
+
+function _abrirAddContato(){
+  const panel=document.getElementById('ct-add-panel')
+  if(!panel) return
+  const showing=panel.style.display!=='none'
+  panel.style.display=showing?'none':''
+  if(!showing){
+    // Atualiza o dropdown de contatos existentes
+    const sel=document.getElementById('ct-sel-exist')
+    if(sel){
+      const alreadyIds=_clienteContatos.filter(c=>c._id).map(c=>c._id)
+      const opts=DB.all('contatos')
+        .filter(c=>!alreadyIds.includes(c.id)&&!c.clienteId)
+        .sort((a,b)=>a.nome?.localeCompare(b.nome||'')||0)
+        .map(c=>`<option value="${c.id}">${H.esc(c.nome)}${c.cargo?' — '+H.esc(c.cargo):''}</option>`)
+        .join('')
+      sel.innerHTML='<option value="">Selecione um contato cadastrado...</option>'+opts
+    }
+    // Oculta mini-form se estava aberto
+    const mf=document.getElementById('ct-mini-form')
+    if(mf) mf.style.display='none'
+  }
+}
+
+function _vincularCtExistente(){
+  const sel=document.getElementById('ct-sel-exist')
+  const id=sel?.value
+  if(!id){alert('Selecione um contato da lista.');return}
+  const ct=DB.find('contatos',id)
+  if(!ct) return
+  _clienteContatos.push({...ct,_id:ct.id})
+  _renderCtList()
+  document.getElementById('ct-add-panel').style.display='none'
+}
+
+function _mostrarFormNovoContato(){
+  const f=document.getElementById('ct-mini-form')
+  if(!f) return
+  f.style.display=''
+  ;['ctn-nome','ctn-cargo','ctn-email','ctn-cel'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value=''
+  })
+  const p=document.getElementById('ctn-princ'); if(p) p.checked=false
+  document.getElementById('ctn-nome')?.focus()
+}
+
+function _salvarNovoContato(){
+  const g=i=>document.getElementById(i)?.value?.trim()
+  const nome=g('ctn-nome')
+  if(!nome){alert('Nome é obrigatório');return}
+  const principal=document.getElementById('ctn-princ')?.checked||false
+  if(principal) _clienteContatos.forEach(c=>c.principal=false)
+  _clienteContatos.push({
+    _id:null, nome, cargo:g('ctn-cargo'), email:g('ctn-email'),
+    celular:g('ctn-cel'), telefone:'', principal
+  })
+  _renderCtList()
+  document.getElementById('ct-add-panel').style.display='none'
 }
 
 function toggleCnpjBusca(){
@@ -1318,11 +1574,46 @@ function saveCliente(id){
     telefone:g('c-tel'),
     email:g('c-email'),
     unidadeId:g('c-uni'),
+    vendedorId:g('c-vendedor')||'',
     cnpjBaixado:document.getElementById('c-cnpj-baixado')?.checked||false,
     ativo:true
   }
   if(!data.nome){alert('Nome é obrigatório');return}
-  if(id) DB.update('clientes',id,data); else DB.insert('clientes',data)
+
+  // Salva o cliente e obtém o ID
+  let savedId=id
+  if(id){
+    DB.update('clientes',id,data)
+  } else {
+    const inserted=DB.insert('clientes',data)
+    savedId=inserted.id
+  }
+
+  // Salva os contatos em memória
+  if(savedId){
+    // Desvincula contatos que foram removidos da lista (só para clientes existentes)
+    if(id){
+      const idsNaLista=_clienteContatos.filter(c=>c._id).map(c=>c._id)
+      DB.all('contatos').filter(c=>c.clienteId===savedId).forEach(c=>{
+        if(!idsNaLista.includes(c.id)) DB.update('contatos',c.id,{clienteId:null,principal:false})
+      })
+    }
+    // Salva/atualiza os contatos da lista em memória
+    _clienteContatos.forEach(ct=>{
+      if(ct._id){
+        // Contato já existe no DB — atualiza clienteId e principal
+        DB.update('contatos',ct._id,{clienteId:savedId,principal:!!ct.principal})
+      } else {
+        // Contato novo — insere
+        DB.insert('contatos',{
+          nome:ct.nome, cargo:ct.cargo||'', email:ct.email||'',
+          celular:ct.celular||'', telefone:ct.telefone||'',
+          clienteId:savedId, principal:!!ct.principal
+        })
+      }
+    })
+  }
+
   closeModal(); navigate('clientes')
 }
 
@@ -1395,21 +1686,24 @@ function saveContato(id){
 // CATÁLOGO
 // ═══════════════════════════════════════════════════════
 function renderCatalogo(){
-  const cat=DB.all('catalogo').sort((a,b)=>(a.categoria||'').localeCompare(b.categoria||'')||a.nome.localeCompare(b.nome||''))
+  const cat=DB.all('catalogo').sort((a,b)=>(a.produto||a.categoria||'').localeCompare(b.produto||b.categoria||'')||a.nome.localeCompare(b.nome||''))
+  const prodColors={'ERP Protheus':'bg-blue-50 text-blue-700','RM':'bg-purple-50 text-purple-700','FLUIG':'bg-teal-50 text-teal-700'}
   return H.header('Catálogo de Serviços',`${cat.length} item(s)`,'Novo Item','newCatalogo()')+
   (cat.length===0?`<div class="card">${H.empty('Catálogo vazio','','Novo Item','newCatalogo()')}</div>`:
   `<div class="card overflow-hidden"><table class="w-full">
-    <thead><tr><th class="th">Código</th><th class="th">Serviço</th><th class="th">Categoria</th><th class="th">Tipo</th><th class="th text-right">Horas Padrão</th><th class="th text-right">Valor/h</th><th class="th text-right">Total Padrão</th><th class="th">Status</th><th class="th"></th></tr></thead>
-    <tbody>${cat.map(c=>{
-      const total=c.tipoPreco==='por_hora'?(c.horasPadrao||0)*(c.valorHora||0):(c.valorFixo||0)
+    <thead><tr><th class="th">#</th><th class="th">Serviço</th><th class="th">Produto</th><th class="th">Tipo</th><th class="th text-right">Esf. Mín.</th><th class="th text-right">Esf. Máx.</th><th class="th text-right">Valor/h</th><th class="th">Status</th><th class="th"></th></tr></thead>
+    <tbody>${cat.map((c,i)=>{
+      const prod=c.produto||c.categoria||'—'
+      const eMin=c.esforcoMin??c.horasPadrao??null
+      const eMax=c.esforcoMax??null
       return `<tr>
-        <td class="td font-mono text-xs text-gray-500">${H.esc(c.codigo||'—')}</td>
+        <td class="td text-gray-400 text-xs text-center">${i+1}</td>
         <td class="td font-medium">${H.esc(c.nome)}</td>
-        <td class="td text-gray-500 text-sm">${H.esc(c.categoria||'—')}</td>
+        <td class="td"><span class="badge ${prodColors[prod]||'bg-gray-100 text-gray-600'}">${H.esc(prod)}</span></td>
         <td class="td"><span class="badge bg-blue-50 text-blue-700">${c.tipoPreco==='por_hora'?'Por Hora':c.tipoPreco==='fixo'?'Fixo':'Sob Consulta'}</span></td>
-        <td class="td text-right text-gray-500">${c.horasPadrao?c.horasPadrao+'h':'—'}</td>
+        <td class="td text-right text-gray-500">${eMin!=null&&eMin>0?eMin+'h':'—'}</td>
+        <td class="td text-right text-gray-500">${eMax!=null&&eMax>0?eMax+'h':'—'}</td>
         <td class="td text-right text-gray-500">${c.valorHora?H.cur(c.valorHora):'—'}</td>
-        <td class="td text-right font-semibold">${total?H.cur(total):'—'}</td>
         <td class="td"><span class="badge ${c.ativo?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${c.ativo?'Ativo':'Inativo'}</span></td>
         <td class="td"><button class="btn btn-secondary btn-sm" onclick="editCatalogo('${c.id}')">Editar</button></td>
       </tr>`}).join('')}
@@ -1420,27 +1714,44 @@ function newCatalogo(){openModal(formCatalogo({}))}
 function editCatalogo(id){openModal(formCatalogo(DB.find('catalogo',id)||{}))}
 function formCatalogo(c={}){
   const isEdit=!!c.id
+  const prod=c.produto||c.categoria||''
+  const eMin=c.esforcoMin??c.horasPadrao??''
+  const eMax=c.esforcoMax??''
+  const vhDefault=c.valorHora!=null?c.valorHora:175
   return `<div class="p-5">
     <div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold">${isEdit?'Editar':'Novo'} Item do Catálogo</h2><button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button></div>
     <div class="space-y-3">
+      <!-- Nome + Produto -->
       <div class="grid grid-cols-2 gap-3">
-        <div><label class="lbl">Código</label><input id="cat-cod" class="inp" value="${H.esc(c.codigo||'')}" placeholder="SIGAFIN-120"></div>
-        <div><label class="lbl">Nome *</label><input id="cat-nome" class="inp" value="${H.esc(c.nome||'')}"></div>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="lbl">Categoria</label><input id="cat-cat" class="inp" value="${H.esc(c.categoria||'')}" placeholder="ERP TOTVS, Serviços..."></div>
-        <div><label class="lbl">Tipo de Preço</label>
-          <select id="cat-tipo" class="inp" onchange="toggleCatPreco()">
-            <option value="por_hora" ${c.tipoPreco==='por_hora'||!c.tipoPreco?'selected':''}>Por Hora</option>
-            <option value="fixo" ${c.tipoPreco==='fixo'?'selected':''}>Preço Fixo</option>
-            <option value="sob_consulta" ${c.tipoPreco==='sob_consulta'?'selected':''}>Sob Consulta</option>
+        <div><label class="lbl">Nome *</label><input id="cat-nome" class="inp" value="${H.esc(c.nome||'')}" placeholder="Descrição do serviço"></div>
+        <div><label class="lbl">Produto</label>
+          <select id="cat-prod" class="inp">
+            <option value="ERP Protheus" ${prod==='ERP Protheus'?'selected':''}>ERP Protheus</option>
+            <option value="RM"           ${prod==='RM'?'selected':''}>RM</option>
+            <option value="FLUIG"        ${prod==='FLUIG'?'selected':''}>FLUIG</option>
           </select>
         </div>
       </div>
-      <div id="cat-hora-fields" class="grid grid-cols-2 gap-3" style="${c.tipoPreco==='fixo'||c.tipoPreco==='sob_consulta'?'display:none':''}">
-        <div><label class="lbl">Horas Padrão</label><input id="cat-horas" class="inp" type="number" min="0" step="0.5" value="${c.horasPadrao||''}"></div>
-        <div><label class="lbl">Valor por Hora (R$)</label><input id="cat-vh" class="inp" type="number" min="0" step="0.01" value="${c.valorHora||''}"></div>
+      <!-- Tipo de Preço -->
+      <div>
+        <label class="lbl">Tipo de Preço</label>
+        <select id="cat-tipo" class="inp" onchange="toggleCatPreco()">
+          <option value="por_hora"    ${c.tipoPreco==='por_hora'||!c.tipoPreco?'selected':''}>Por Hora</option>
+          <option value="fixo"        ${c.tipoPreco==='fixo'?'selected':''}>Preço Fixo</option>
+          <option value="sob_consulta"${c.tipoPreco==='sob_consulta'?'selected':''}>Sob Consulta</option>
+        </select>
       </div>
+      <!-- Esforço Mínimo / Máximo / Valor hora -->
+      <div id="cat-hora-fields" class="grid grid-cols-3 gap-3" style="${c.tipoPreco==='fixo'||c.tipoPreco==='sob_consulta'?'display:none':''}">
+        <div><label class="lbl">Esforço Mínimo (h)</label><input id="cat-horas-min" class="inp" type="number" min="0" step="0.5" value="${eMin}" placeholder="h"></div>
+        <div><label class="lbl">Esforço Máximo (h)</label><input id="cat-horas-max" class="inp" type="number" min="0" step="0.5" value="${eMax}" placeholder="h"></div>
+        <div>
+          <label class="lbl">Valor por Hora (R$)</label>
+          <input id="cat-vh" class="inp" type="number" min="0" step="0.01" value="${vhDefault}"
+            style="background:#fefce8;border-color:#fde68a" title="Valor padrão: R$ 175,00">
+        </div>
+      </div>
+      <!-- Valor Fixo -->
       <div id="cat-fixo-field" style="${c.tipoPreco!=='fixo'?'display:none':''}">
         <label class="lbl">Valor Fixo (R$)</label><input id="cat-vf" class="inp" type="number" min="0" step="0.01" value="${c.valorFixo||''}">
       </div>
@@ -1461,7 +1772,19 @@ function toggleCatPreco(){
 }
 function saveCatalogo(id){
   const g=i=>document.getElementById(i)?.value?.trim()
-  const data={codigo:g('cat-cod'),nome:g('cat-nome'),categoria:g('cat-cat'),tipoPreco:g('cat-tipo'),horasPadrao:parseFloat(g('cat-horas'))||0,valorHora:parseFloat(g('cat-vh'))||0,valorFixo:parseFloat(g('cat-vf'))||0,descricao:g('cat-desc'),ativo:document.getElementById('cat-ativo')?.checked||false}
+  const eMin=parseFloat(g('cat-horas-min'))||0
+  const eMax=parseFloat(g('cat-horas-max'))||0
+  const data={
+    nome:g('cat-nome'),
+    produto:g('cat-prod'),
+    tipoPreco:g('cat-tipo'),
+    esforcoMin:eMin,
+    esforcoMax:eMax||eMin,           // se não informar máximo, iguala ao mínimo
+    valorHora:parseFloat(g('cat-vh'))||175,
+    valorFixo:parseFloat(g('cat-vf'))||0,
+    descricao:g('cat-desc'),
+    ativo:document.getElementById('cat-ativo')?.checked||false
+  }
   if(!data.nome){alert('Nome é obrigatório');return}
   if(id) DB.update('catalogo',id,data); else DB.insert('catalogo',data)
   closeModal(); navigate('catalogo')
@@ -1556,21 +1879,31 @@ function saveUsuario(id, isEdit){
 // UNIDADES
 // ═══════════════════════════════════════════════════════
 function renderUnidades(){
-  const unis=DB.all('unidades')
+  const unis=DB.all('unidades'), usuarios=DB.all('usuarios')
   return H.header('Unidades','Unidades operacionais TSM','Nova Unidade','newUnidade()')+
   `<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    ${unis.map(u=>`
+    ${unis.map(u=>{
+      const gerente=u.gerenteId?usuarios.find(us=>us.id===u.gerenteId):null
+      const locParts=[u.endereco,u.bairro,[u.estado].filter(Boolean).join('')].filter(Boolean)
+      const loc=locParts.length?locParts.join(', '):''
+      return `
       <div class="card p-5 cursor-pointer hover:shadow-md transition-shadow" onclick="editUnidade('${u.id}')">
         <div class="flex items-start gap-3">
           <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
             <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           </div>
-          <div><p class="font-semibold">${H.esc(u.nome)}</p><span class="badge bg-blue-100 text-blue-700 mt-1">${H.esc(u.sigla)}</span>${u.descricao?`<p class="text-sm text-gray-500 mt-1">${H.esc(u.descricao)}</p>`:''}</div>
+          <div style="flex:1;min-width:0">
+            <p class="font-semibold">${H.esc(u.nome)}</p>
+            <span class="badge bg-blue-100 text-blue-700 mt-1">${H.esc(u.sigla)}</span>
+            ${u.descricao?`<p class="text-sm text-gray-500 mt-1">${H.esc(u.descricao)}</p>`:''}
+            ${loc?`<p class="text-xs text-gray-400 mt-1 truncate">📍 ${H.esc(loc)}</p>`:''}
+            ${gerente?`<p class="text-xs text-gray-500 mt-1">👤 ${H.esc(gerente.nome)}</p>`:''}
+          </div>
         </div>
         <div class="mt-3 flex items-center justify-between text-xs text-gray-400">
           <span>${u.ativo?'✓ Ativa':'✗ Inativa'}</span><span class="text-blue-600">Editar →</span>
         </div>
-      </div>`).join('')}
+      </div>`}).join('')}
     ${unis.length===0?`<div class="col-span-3 card">${H.empty('Nenhuma unidade','','Nova Unidade','newUnidade()')}</div>`:''}
   </div>`
 }
@@ -1578,7 +1911,9 @@ function newUnidade(){openModal(formUnidade({}))}
 function editUnidade(id){openModal(formUnidade(DB.find('unidades',id)||{}))}
 function formUnidade(u={}){
   const isEdit=!!u.id
-  return `<div class="p-5">
+  const usuarios=DB.all('usuarios').filter(us=>us.ativo!==false)
+  const optsGerente=usuarios.map(us=>`<option value="${us.id}"${us.id===u.gerenteId?' selected':''}>${H.esc(us.nome)} — ${H.esc(H.perfil(us.perfil))}</option>`).join('')
+  return `<div class="p-5" style="min-width:580px">
     <div class="flex items-center justify-between mb-4"><h2 class="text-lg font-bold">${isEdit?'Editar':'Nova'} Unidade</h2><button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button></div>
     <div class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
@@ -1586,6 +1921,40 @@ function formUnidade(u={}){
         <div><label class="lbl">Sigla *</label><input id="un-sigla" class="inp" value="${H.esc(u.sigla||'')}" placeholder="SDM" style="text-transform:uppercase" maxlength="10"></div>
       </div>
       <div><label class="lbl">Descrição</label><textarea id="un-desc" class="inp" rows="2">${H.esc(u.descricao||'')}</textarea></div>
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-1">Endereço</p>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="lbl">CEP</label><input id="un-cep" class="inp" value="${H.esc(u.cep||'')}" placeholder="00000-000" maxlength="9" oninput="this.value=this.value.replace(/\\D/g,'').replace(/(\\d{5})(\\d)/,'$1-$2').substring(0,9)" onblur="_buscarCepUnidade()"></div>
+        <div class="col-span-2"><label class="lbl">Endereço</label><input id="un-end" class="inp" value="${H.esc(u.endereco||'')}" placeholder="Rua, número"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">Bairro</label><input id="un-bairro" class="inp" value="${H.esc(u.bairro||'')}" placeholder="Bairro"></div>
+        <div><label class="lbl">Estado</label>
+          <select id="un-estado" class="inp">
+            <option value="">Selecione...</option>
+            ${['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(e=>`<option value="${e}"${e===u.estado?' selected':''}>${e}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-1">Responsável</p>
+      <div><label class="lbl">Gerente da Unidade</label>
+        <select id="un-gerente" class="inp">
+          <option value="">Sem gerente vinculado</option>
+          ${optsGerente}
+        </select>
+      </div>
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-1">Tributação</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Imposto (%)</label>
+          <div style="position:relative">
+            <input id="un-imposto" class="inp" type="number" min="0" max="100" step="0.01"
+              value="${u.imposto!=null?u.imposto:''}" placeholder="Ex: 12.50"
+              style="padding-right:2rem">
+            <span style="position:absolute;right:.6rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:.85rem;pointer-events:none">%</span>
+          </div>
+          <p style="font-size:.7rem;color:#6b7280;margin-top:.2rem">Aplicado automaticamente no total da proposta</p>
+        </div>
+      </div>
       <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="un-ativo" ${u.ativo!==false?'checked':''} class="rounded"><span class="text-sm text-gray-700">Unidade ativa</span></label>
     </div>
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
@@ -1595,9 +1964,26 @@ function formUnidade(u={}){
     </div>
   </div>`
 }
+function _buscarCepUnidade(){
+  const cep=document.getElementById('un-cep')?.value.replace(/\D/g,'')
+  if(cep.length!==8)return
+  fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`).then(r=>r.json()).then(d=>{
+    if(d.street||d.neighborhood){
+      const e=document.getElementById('un-end'); if(e&&!e.value) e.value=d.street||''
+      const b=document.getElementById('un-bairro'); if(b&&!b.value) b.value=d.neighborhood||''
+      const es=document.getElementById('un-estado'); if(es&&!es.value) es.value=d.state||''
+    }
+  }).catch(()=>{})
+}
 function saveUnidade(id){
   const g=i=>document.getElementById(i)?.value?.trim()
-  const data={nome:g('un-nome'),sigla:(g('un-sigla')||'').toUpperCase(),descricao:g('un-desc'),ativo:document.getElementById('un-ativo')?.checked||false}
+  const data={
+    nome:g('un-nome'), sigla:(g('un-sigla')||'').toUpperCase(), descricao:g('un-desc'),
+    cep:g('un-cep'), endereco:g('un-end'), bairro:g('un-bairro'), estado:g('un-estado'),
+    gerenteId:g('un-gerente')||'',
+    imposto:parseFloat(g('un-imposto'))||0,
+    ativo:document.getElementById('un-ativo')?.checked||false
+  }
   if(!data.nome){alert('Nome é obrigatório');return}
   if(id) DB.update('unidades',id,data); else DB.insert('unidades',data)
   closeModal(); navigate('unidades')
