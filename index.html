@@ -49,14 +49,19 @@
 
   /* Modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem}
-  .modal{background:#fff;border-radius:1rem;width:100%;max-width:700px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .modal{background:#fff;border-radius:1rem;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 
   /* Layout base */
   html,body{height:100%;margin:0;padding:0}
   .layout{display:flex;height:100vh;overflow:hidden}
-  .sidebar{width:220px;min-width:220px;background:#111827;display:flex;flex-direction:column;overflow:hidden}
-  .main-area{flex:1;overflow-y:auto;background:#f9fafb}
+  .sidebar{width:220px;min-width:220px;background:#111827;display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,min-width .25s ease}
+  .sidebar.collapsed{width:0;min-width:0}
+  .sidebar.collapsed *{opacity:0;pointer-events:none;transition:opacity .15s}
+  .main-area{flex:1;overflow-y:auto;background:#f9fafb;position:relative}
   .content-wrap{padding:1.5rem;max-width:1280px;margin:0 auto}
+  .sidebar-toggle{position:fixed;top:.85rem;left:188px;z-index:40;width:1.75rem;height:1.75rem;border-radius:50%;background:#1f2937;border:1px solid #374151;color:#9ca3af;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:left .25s ease,background .15s,color .15s}
+  .sidebar-toggle:hover{background:#2563eb;color:#fff;border-color:#2563eb}
+  .sidebar-toggle.collapsed{left:.75rem}
 
   /* Seção label no nav */
   .nav-section{padding:.75rem 1rem .25rem;font-size:.7rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em}
@@ -128,8 +133,15 @@
 <!-- ═══════════════════ APP PRINCIPAL ═══════════════════ -->
 <div id="app-wrap" class="layout">
 
+  <!-- Botão toggle sidebar -->
+  <button id="sidebar-toggle-btn" class="sidebar-toggle no-print" onclick="toggleSidebar()" title="Expandir/Recolher menu">
+    <svg id="sidebar-toggle-icon" style="width:.85rem;height:.85rem;flex-shrink:0;transition:transform .25s" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+    </svg>
+  </button>
+
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <!-- Logo -->
     <div style="padding:1rem;border-bottom:1px solid #1f2937;display:flex;align-items:center;gap:.75rem;flex-shrink:0">
       <div style="width:2.25rem;height:2.25rem;background:#2563eb;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -169,6 +181,25 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
         Catálogo
       </a>
+      <a class="sidebar-link" data-page="pacotes">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        Pacotes
+      </a>
+
+      <div class="nav-section">Rotinas</div>
+      <a class="sidebar-link" data-page="despesas">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        Despesas
+      </a>
+      <a class="sidebar-link" data-page="aprovacoes" style="position:relative">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Aprovações
+        <span id="aprov-badge" style="display:none;position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:#ef4444;color:#fff;font-size:.6rem;font-weight:700;min-width:1.1rem;height:1.1rem;border-radius:999px;align-items:center;justify-content:center;padding:0 .25rem"></span>
+      </a>
+      <a class="sidebar-link" data-page="transferencia">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        Transferência de Contas
+      </a>
 
       <div class="nav-section">Configurações</div>
       <a class="sidebar-link" data-page="usuarios">
@@ -202,6 +233,39 @@
 <div id="modal-overlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modal-box" onclick="event.stopPropagation()">
     <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- Pacote Selector overlay -->
+<div id="pac-selector-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closePacoteSelector()">
+  <div style="background:#fff;border-radius:.75rem;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 1.25rem;border-bottom:1px solid #e5e7eb;background:#f9fafb">
+      <span style="font-size:.95rem;font-weight:600;color:#111827">📦 Selecionar Pacote</span>
+      <button onclick="closePacoteSelector()" style="background:none;border:none;font-size:1.3rem;color:#9ca3af;cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <div id="pac-selector-list" style="padding:1rem;display:flex;flex-direction:column;gap:.625rem;max-height:400px;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- Questionário de Escopo overlay -->
+<div id="q-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:70;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeQuestionario()">
+  <div style="background:#fff;border-radius:.875rem;width:100%;max-width:580px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,.3);overflow:hidden" onclick="event.stopPropagation()">
+    <div style="background:#1d4ed8;color:#fff;padding:1rem 1.25rem;display:flex;align-items:start;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:#93c5fd;margin-bottom:.2rem">🧠 Definição de Escopo</div>
+        <div id="q-titulo" style="font-size:1rem;font-weight:700"></div>
+        <div id="q-subtitulo" style="font-size:.78rem;color:#bfdbfe;margin-top:.15rem"></div>
+      </div>
+      <button onclick="closeQuestionario()" style="background:none;border:none;color:#93c5fd;font-size:1.4rem;cursor:pointer;line-height:1;margin-top:-.1rem">&times;</button>
+    </div>
+    <div id="q-perguntas" style="overflow-y:auto;flex:1;padding:1rem"></div>
+    <div style="padding:.875rem 1.25rem;border-top:1px solid #e5e7eb;background:#f9fafb;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="font-size:.85rem;color:#6b7280">Esforço calculado: <strong id="q-horas-preview" style="color:#1d4ed8;font-size:1rem">—</strong></div>
+      <div class="flex gap-2">
+        <button onclick="closeQuestionario()" class="btn btn-secondary">Cancelar</button>
+        <button onclick="aplicarQuestionario()" class="btn btn-primary" id="q-aplicar-btn">✓ Aplicar Escopo</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -254,7 +318,15 @@ function showApp(){
   document.getElementById('app-wrap').classList.add('visible')
   const u=AUTH.currentUser()
   const sidebarUser=document.getElementById('sidebar-user')
-  if(sidebarUser && u) sidebarUser.textContent=`${u.nome} · ${u.perfil==='administrador'?'Admin':u.perfil==='vendedor'?'Vendedor':u.perfil==='arquiteto'?'Arquiteto':u.perfil}`
+  if(sidebarUser && u) sidebarUser.textContent=`${u.nome} · ${u.perfil==='administrador'?'Admin':u.perfil==='vendedor'?'Executivo (ESN)':u.perfil==='arquiteto'?'Arquiteto':u.perfil==='gestor_servicos'?'Gestor de Serviços':u.perfil}`
+  // Restaura preferência de sidebar
+  if(localStorage.getItem('tsm_sidebar_collapsed')==='1'){
+    document.getElementById('sidebar')?.classList.add('collapsed')
+    const btn=document.getElementById('sidebar-toggle-btn')
+    const icon=document.getElementById('sidebar-toggle-icon')
+    if(btn) btn.classList.add('collapsed')
+    if(icon) icon.style.transform='rotate(180deg)'
+  }
   navigate('dashboard')
 }
 
@@ -308,6 +380,13 @@ function seedIfEmpty(){
     ]
     itens.forEach(i=>DB.insert('catalogo',i))
   }
+  if(DB.get('pacotes').length===0){
+    [
+      {nome:'Apply Backoffice - Bronze',descricao:'Pacote de entrada com recursos essenciais',valorSetup:35000,valorRecorrente:3500,ativo:true},
+      {nome:'Apply Backoffice - Prata', descricao:'Pacote intermediário com recursos ampliados',valorSetup:40000,valorRecorrente:4500,ativo:true},
+      {nome:'Apply Backoffice - Ouro',  descricao:'Pacote completo com todos os recursos disponíveis',valorSetup:55000,valorRecorrente:5500,ativo:true},
+    ].forEach(p=>DB.insert('pacotes',p))
+  }
   if(DB.get('usuarios').length===0){
     DB.insert('usuarios',{nome:'Administrador',email:'admin@tsm.com.br',senha:'admin123',perfil:'administrador',unidadeId:'',ativo:true})
     DB.insert('usuarios',{nome:'João Vendedor',email:'joao@tsm.com.br',senha:'tsm123',perfil:'vendedor',unidadeId:'',ativo:true})
@@ -324,13 +403,16 @@ function seedIfEmpty(){
   }
 }
 
+// Garante que a collection de despesas existe
+if(!localStorage.getItem('tsm_despesas')) DB.set('despesas',[])
+
 // ═══════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════
 const H = {
   cur(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0) },
-  date(d){ if(!d)return'—'; try{return new Date(d+'T12:00:00').toLocaleDateString('pt-BR')}catch{return d} },
-  dt(d){ if(!d)return'—'; return new Date(d).toLocaleString('pt-BR') },
+  date(d){ if(!d)return'—'; try{ const s=String(d); const dt=s.includes('T')||s.includes('Z')?new Date(s):new Date(s+'T12:00:00'); const r=dt.toLocaleDateString('pt-BR'); return r==='Invalid Date'?'—':r }catch{return'—'} },
+  dt(d){ if(!d)return'—'; try{ const r=new Date(d).toLocaleString('pt-BR'); return r==='Invalid Date'?'—':r }catch{return'—'} },
   esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') },
   badge(txt,cls){ return `<span class="badge ${cls}">${txt}</span>` },
   statusOp(s){
@@ -339,11 +421,11 @@ const H = {
     return this.badge(l[s]||s, m[s]||'bg-gray-100 text-gray-700')
   },
   statusProp(s){
-    const m={rascunho:'bg-gray-100 text-gray-700',enviada:'bg-blue-100 text-blue-800',aprovada:'bg-green-100 text-green-800',rejeitada:'bg-red-100 text-red-800',expirada:'bg-orange-100 text-orange-700',revisao:'bg-yellow-100 text-yellow-800'}
-    const l={rascunho:'Rascunho',enviada:'Enviada',aprovada:'Aprovada',rejeitada:'Rejeitada',expirada:'Expirada',revisao:'Em Revisão'}
+    const m={rascunho:'bg-gray-100 text-gray-700',aguardando_aprovacao:'bg-yellow-100 text-yellow-800',aprovada:'bg-green-100 text-green-800',rejeitada:'bg-red-100 text-red-800',enviada:'bg-blue-100 text-blue-800',expirada:'bg-orange-100 text-orange-700',revisao:'bg-yellow-100 text-yellow-800'}
+    const l={rascunho:'Rascunho',aguardando_aprovacao:'⏳ Aguardando Aprovação',aprovada:'Aprovada',rejeitada:'Rejeitada',enviada:'Enviada',expirada:'Expirada',revisao:'Em Revisão'}
     return this.badge(l[s]||s, m[s]||'bg-gray-100 text-gray-700')
   },
-  perfil(p){const m={vendedor:'Vendedor',arquiteto:'Arquiteto de Soluções',gerente_unidade:'Gerente da Unidade',gerente_geral:'Gerente Geral',administrador:'Administrador'};return m[p]||p},
+  perfil(p){const m={vendedor:'Executivo (ESN)',arquiteto:'Arquiteto de Soluções',gerente_unidade:'Gerente da Unidade',gerente_geral:'Gerente Geral',administrador:'Administrador',gestor_servicos:'Gestor de Serviços'};return m[p]||p},
   empty(title,desc,btnLabel,btnAction){
     return `<div class="flex flex-col items-center py-16 text-center">
       <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mb-3">
@@ -372,6 +454,12 @@ const H = {
 function openModal(html){
   document.getElementById('modal-content').innerHTML=html
   document.getElementById('modal-overlay').style.display='flex'
+  // Se o modal do catálogo foi aberto, renderiza o editor de perguntas
+  if(document.getElementById('cat-perguntas-wrap')) _renderCatPerguntas()
+  // Se o modal da proposta foi aberto, dispara recalcTotais inicial
+  if(document.getElementById('p-total')) setTimeout(recalcTotais,50)
+  // Se o modal de despesa foi aberto, renderiza lista de anexos
+  if(document.getElementById('d-anexos-list')) setTimeout(renderDespAnexosList,10)
 }
 function closeModal(){
   document.getElementById('modal-overlay').style.display='none'
@@ -380,6 +468,18 @@ function closeModal(){
 // ═══════════════════════════════════════════════════════
 // ROUTER
 // ═══════════════════════════════════════════════════════
+function toggleSidebar(){
+  const sidebar=document.getElementById('sidebar')
+  const btn=document.getElementById('sidebar-toggle-btn')
+  const icon=document.getElementById('sidebar-toggle-icon')
+  const collapsed=sidebar.classList.toggle('collapsed')
+  btn.classList.toggle('collapsed', collapsed)
+  // Gira o ícone: seta para esquerda quando aberto, para direita quando fechado
+  icon.style.transform=collapsed?'rotate(180deg)':''
+  // Persiste preferência
+  localStorage.setItem('tsm_sidebar_collapsed', collapsed?'1':'0')
+}
+
 function navigate(page, params={}){
   window._currentPage=page
   window._params=params
@@ -389,11 +489,14 @@ function navigate(page, params={}){
   const renders={
     dashboard:renderDashboard, oportunidades:renderOportunidades, propostas:renderPropostas,
     clientes:renderClientes, contatos:renderContatos,
-    catalogo:renderCatalogo, usuarios:renderUsuarios, unidades:renderUnidades
+    catalogo:renderCatalogo, usuarios:renderUsuarios, unidades:renderUnidades,
+    transferencia:renderTransferencia, aprovacoes:renderAprovacoes, pacotes:renderPacotes,
+    despesas:renderDespesas
   }
   const fn=renders[page]||renderDashboard
   document.getElementById('content').innerHTML=fn(params)
   bindEvents()
+  _atualizarBadgeAprovacoes()
 }
 
 function bindEvents(){
@@ -411,6 +514,10 @@ function renderDashboard(){
   const ganhas=ops.filter(o=>o.status==='ganha')
   const receitaFechada=ganhas.reduce((a,o)=>a+(o.valorEstimado||0),0)
   const opsAbertas=ops.filter(o=>!['ganha','perdida','cancelada'].includes(o.status)).length
+  const eu=AUTH.currentUser()
+  const isGestor=eu&&(eu.perfil==='gestor_servicos'||eu.perfil==='gerente_geral'||eu.perfil==='administrador')
+  const pendentesAprov=DB.all('aprovacoes').filter(a=>a.status==='pendente')
+  const aguardandoMinhas=DB.all('propostas').filter(p=>p.status==='aguardando_aprovacao')
 
   const cards=[
     {l:'Oportunidades Abertas',v:opsAbertas,color:'text-blue-600',bg:'bg-blue-50',page:'oportunidades'},
@@ -422,8 +529,30 @@ function renderDashboard(){
   const recentOps=ops.slice(-5).reverse()
   const recentProps=props.slice(-5).reverse()
 
+  const alertaAprovacao=isGestor&&pendentesAprov.length>0?`
+    <div style="background:#fefce8;border:1px solid #fde047;border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;cursor:pointer" onclick="navigate('aprovacoes')">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div style="width:2.5rem;height:2.5rem;background:#fde047;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.25rem">⏳</div>
+        <div>
+          <p style="font-weight:700;color:#92400e">${pendentesAprov.length} proposta(s) aguardando sua aprovação</p>
+          <p style="font-size:.8rem;color:#a16207">Clique para analisar e aprovar ou rejeitar</p>
+        </div>
+      </div>
+      <span style="color:#a16207;font-size:1.25rem">→</span>
+    </div>`
+  :aguardandoMinhas.length>0&&!isGestor?`
+    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:.75rem;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem">
+      <div style="width:2.5rem;height:2.5rem;background:#dbeafe;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.25rem">📋</div>
+      <div>
+        <p style="font-weight:700;color:#1e40af">${aguardandoMinhas.length} proposta(s) em análise pelo Gestor de Serviços</p>
+        <p style="font-size:.8rem;color:#3b82f6">Você será notificado quando houver uma decisão</p>
+      </div>
+    </div>`
+  :''
+
   return `
     <div><h1 class="text-2xl font-bold mb-1">Dashboard</h1><p class="text-gray-500 text-sm mb-5">Visão geral do pipeline TSM</p></div>
+    ${alertaAprovacao}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       ${cards.map(c=>`
         <div class="card p-5 cursor-pointer hover:shadow-md transition-shadow" onclick="navigate('${c.page}')">
@@ -444,7 +573,7 @@ function renderDashboard(){
         ${recentOps.length===0?H.empty('Nenhuma oportunidade',''):recentOps.map(o=>{
           const cli=o.clienteId?DB.find('clientes',o.clienteId):null
           return `<div class="flex items-center justify-between px-4 py-3 border-t border-gray-50 hover:bg-gray-50 cursor-pointer" onclick="editOportunidade('${o.id}')">
-            <div class="min-w-0"><p class="text-sm font-medium truncate">${H.esc(o.titulo)}</p><p class="text-xs text-gray-400">${cli?H.esc(cli.nome):'—'}</p></div>
+            <div class="min-w-0"><p class="text-sm font-medium truncate">${H.esc(o.titulo)}</p><p class="text-xs text-gray-400">${cli?H.esc(_cliNome(cli)):'—'}</p></div>
             <div class="ml-3 flex-shrink-0">${H.statusOp(o.status)}</div>
           </div>`}).join('')}
       </div>
@@ -457,7 +586,7 @@ function renderDashboard(){
           const op=p.oportunidadeId?DB.find('oportunidades',p.oportunidadeId):null
           const cli=op&&op.clienteId?DB.find('clientes',op.clienteId):null
           return `<div class="flex items-center justify-between px-4 py-3 border-t border-gray-50 hover:bg-gray-50 cursor-pointer" onclick="editProposta('${p.id}')">
-            <div class="min-w-0"><p class="text-sm font-medium">${H.esc(p.numero||'Rascunho')}</p><p class="text-xs text-gray-400">${cli?H.esc(cli.nome):'—'}</p></div>
+            <div class="min-w-0"><p class="text-sm font-medium">${H.esc(p.numero||'Rascunho')}</p><p class="text-xs text-gray-400">${cli?H.esc(_cliNome(cli)):'—'}</p></div>
             <div class="ml-3 flex items-center gap-2 flex-shrink-0"><span class="text-sm font-semibold">${H.cur(p.valorTotal)}</span>${H.statusProp(p.status)}</div>
           </div>`}).join('')}
       </div>
@@ -473,7 +602,7 @@ function renderOportunidades(){
   (ops.length===0?`<div class="card">${H.empty('Nenhuma oportunidade','Crie uma oportunidade para começar o acompanhamento','Nova Oportunidade','newOportunidade()')}</div>`:
   `<div class="card overflow-hidden"><table class="w-full">
     <thead><tr>
-      <th class="th">Título / Cliente</th><th class="th">Status</th><th class="th">Vendedor</th>
+      <th class="th">Título / Cliente</th><th class="th">Status</th><th class="th">Executivo (ESN)</th>
       <th class="th">Unidade</th><th class="th text-right">Valor Est.</th><th class="th text-center">Prob.</th><th class="th">Fechamento</th><th class="th"></th>
     </tr></thead>
     <tbody>${ops.map(o=>{
@@ -481,7 +610,7 @@ function renderOportunidades(){
       const vend=o.vendedorId?DB.find('usuarios',o.vendedorId):null
       const uni=o.unidadeId?DB.find('unidades',o.unidadeId):null
       return `<tr>
-        <td class="td"><p class="font-medium">${H.esc(o.titulo)}</p><p class="text-xs text-gray-400">${cli?H.esc(cli.nome):'—'}</p></td>
+        <td class="td"><p class="font-medium">${H.esc(o.titulo)}</p><p class="text-xs text-gray-400">${cli?H.esc(_cliNome(cli)):'—'}</p></td>
         <td class="td">${H.statusOp(o.status)}</td>
         <td class="td text-gray-500 text-sm">${vend?H.esc(vend.nome):'—'}</td>
         <td class="td">${uni?`<span class="badge bg-gray-100 text-gray-700">${H.esc(uni.sigla)}</span>`:'—'}</td>
@@ -523,7 +652,7 @@ function formOportunidade(o={}){
         <div><label class="lbl">Cliente *</label>
           <select id="op-cliente" class="inp" onchange="onClienteOportunidadeChange()">
             <option value="">Selecione o cliente...</option>
-            ${H.selectOpts(clis,'id',c=>c.nome+(c.cpfCnpj?' — '+c.cpfCnpj:''),o.clienteId||'')}
+            ${H.selectOpts(clis,'id',c=>_cliNome(c)+(c.cpfCnpj?' — '+c.cpfCnpj:''),o.clienteId||'')}
           </select></div>
         <div>
           <label class="lbl" style="display:flex;align-items:center;gap:.35rem">
@@ -537,7 +666,7 @@ function formOportunidade(o={}){
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <div><label class="lbl">Vendedor Responsável</label>
+        <div><label class="lbl">Executivo (ESN)</label>
           <select id="op-vendedor" class="inp"><option value="">Nenhum</option>${H.selectOpts(users,'id',u=>u.nome,o.vendedorId||'')}</select></div>
         <div><label class="lbl">Arquiteto de Soluções</label>
           <select id="op-arquiteto" class="inp"><option value="">Nenhum</option>${H.selectOpts(users,'id',u=>u.nome,o.arquitetoId||'')}</select></div>
@@ -646,7 +775,7 @@ function renderPropostas(){
       const cli=op&&op.clienteId?DB.find('clientes',op.clienteId):null
       return `<tr>
         <td class="td font-mono font-semibold text-sm">${H.esc(p.numero||'—')}</td>
-        <td class="td"><p class="font-medium text-sm">${H.esc(op?op.titulo:'(sem oportunidade)')}</p><p class="text-xs text-gray-400">${cli?H.esc(cli.nome):'—'}</p></td>
+        <td class="td"><p class="font-medium text-sm">${H.esc(op?op.titulo:'(sem oportunidade)')}</p><p class="text-xs text-gray-400">${cli?H.esc(_cliNome(cli)):'—'}</p></td>
         <td class="td">${H.statusProp(p.status)}</td>
         <td class="td text-right font-semibold">${H.cur(p.valorTotal)}</td>
         <td class="td text-sm text-gray-500">${H.date(p.validade)}</td>
@@ -673,6 +802,12 @@ function editProposta(id){
 }
 
 let _propostaItens=[]
+let _propostaParcelas=[]
+let _despAnexos=[]          // anexos em edição no formDespesa
+let _catPerguntas=[]        // perguntas em edição no formCatalogo
+let _qIdx=-1                // índice do item da proposta em questionamento
+let _qRespostas={}          // {perguntaId: opcaoIndex}
+let _qCat=null              // item do catálogo em questionamento
 let _clienteContatos=[]   // contatos em memória enquanto o form de cliente está aberto
 
 function _resolverImpostoProposta(p, ops){
@@ -690,8 +825,13 @@ function _resolverImpostoProposta(p, ops){
 }
 function formProposta(p={},ops,cat){
   _propostaItens=p.itens?JSON.parse(JSON.stringify(p.itens)):[]
+  _propostaParcelas=p.parcelas?JSON.parse(JSON.stringify(p.parcelas)):[]
   const isEdit=!!p.id
   const impostoInicial=_resolverImpostoProposta(p,ops)
+  const eu=AUTH.currentUser()
+  const isGestor=eu&&eu.perfil==='gestor_servicos'
+  const podeSubmeter=isEdit&&(p.status==='rascunho'||p.status==='rejeitada')&&!isGestor
+  const aguardando=p.status==='aguardando_aprovacao'
 
   return `
   <div class="p-5" style="min-width:640px">
@@ -706,12 +846,30 @@ function formProposta(p={},ops,cat){
           <select id="p-op" class="inp"><option value="">Avulsa (sem oportunidade)</option>${H.selectOpts(ops,'id',o=>o.titulo,p.oportunidadeId||'')}</select></div>
         <div><label class="lbl">Status</label>
           <select id="p-status" class="inp">
-            ${[['rascunho','Rascunho'],['enviada','Enviada'],['aprovada','Aprovada'],['rejeitada','Rejeitada'],['expirada','Expirada']].map(([v,l])=>`<option value="${v}" ${(p.status||'rascunho')===v?'selected':''}>${l}</option>`).join('')}
+            ${[['rascunho','Rascunho'],['aguardando_aprovacao','⏳ Aguardando Aprovação'],['aprovada','Aprovada'],['rejeitada','Rejeitada'],['enviada','Enviada'],['expirada','Expirada']].map(([v,l])=>`<option value="${v}" ${(p.status||'rascunho')===v?'selected':''}>${l}</option>`).join('')}
           </select></div>
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div><label class="lbl">Validade</label><input id="p-validade" class="inp" type="date" value="${p.validade||''}"></div>
-        <div><label class="lbl">Condições de Pagamento</label><input id="p-cond" class="inp" value="${H.esc(p.condicoesPagamento||'')}" placeholder="Ex: 50% início, 50% conclusão"></div>
+        <div>
+          <label class="lbl">Condições de Pagamento
+            <span class="text-gray-400 font-normal text-xs ml-1">— Digite "2x", "3x"… para parcelar automaticamente</span>
+          </label>
+          <input id="p-cond" class="inp" value="${H.esc(p.condicoesPagamento||'')}" placeholder="Ex: 2x, 3x, 50% início + 50% conclusão" oninput="detectarParcelamento(this.value)">
+        </div>
+      </div>
+      <!-- Parcelamento inteligente -->
+      <div id="parcelas-container" style="display:${_propostaParcelas.length>0?'block':'none'}">
+        <div class="border border-blue-200 rounded-lg overflow-hidden">
+          <div style="background:#eff6ff;padding:.5rem .75rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #bfdbfe">
+            <span style="font-size:.82rem;font-weight:600;color:#1d4ed8">📅 Cronograma de Pagamento</span>
+            <div class="flex items-center gap-2">
+              <span style="font-size:.75rem;color:#6b7280">Total: <strong id="parcelas-total-label" style="color:#1d4ed8">${H.cur(0)}</strong></span>
+              <button onclick="sugerirDatas()" class="btn btn-secondary btn-sm" style="font-size:.72rem;padding:.2rem .6rem">📆 Sugerir datas</button>
+            </div>
+          </div>
+          <div id="parcelas-table-wrap" style="padding:.5rem"></div>
+        </div>
       </div>
       <div><label class="lbl">Observações</label><textarea id="p-obs" class="inp" rows="2">${H.esc(p.observacoes||'')}</textarea></div>
     </div>
@@ -720,7 +878,10 @@ function formProposta(p={},ops,cat){
     <div class="border border-gray-200 rounded-lg overflow-hidden mb-3">
       <div class="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
         <span class="text-sm font-semibold text-gray-700">Itens da Proposta</span>
-        <button class="btn btn-secondary btn-sm" onclick="addPropostaItem()">+ Adicionar Item</button>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="addPropostaItem()">+ Adicionar Item</button>
+          <button class="btn btn-secondary btn-sm" onclick="openPacoteSelector()" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe">📦 Adicionar Pacote</button>
+        </div>
       </div>
       <div id="proposta-itens">
         ${renderItensTable(cat)}
@@ -728,61 +889,111 @@ function formProposta(p={},ops,cat){
       <!-- Totais -->
       <div class="px-3 py-3 bg-gray-50 border-t border-gray-200">
         <div class="flex justify-end">
-          <div class="w-72 space-y-1 text-sm">
-            <div class="flex justify-between"><span class="text-gray-500">Subtotal:</span><span id="p-subtotal" class="font-medium">R$ 0,00</span></div>
-            <div class="flex items-center justify-between gap-2"><span class="text-gray-500 flex-shrink-0">Desconto geral %:</span>
-              <input id="p-desc-geral" class="inp text-right w-20 py-0.5" type="number" min="0" max="100" step="0.5" value="${p.descontoGeral||0}" oninput="recalcTotais()"></div>
-            <div class="flex justify-between"><span class="text-gray-500">Subtotal c/ desconto:</span><span id="p-subtotal-desc" class="font-medium">R$ 0,00</span></div>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-gray-500 flex-shrink-0">Imposto %:</span>
-              <input id="p-imposto" class="inp text-right w-20 py-0.5" type="number" min="0" max="100" step="0.01" value="${impostoInicial||0}" oninput="recalcTotais()" title="Pré-preenchido com o imposto da unidade. Editável por proposta.">
+          <div class="w-96 text-sm">
+            <!-- Sub-totais por tipo -->
+            <div class="mb-2 pb-2 border-b border-gray-200 space-y-1">
+              <div id="row-sub-setup" class="flex justify-between" style="display:none">
+                <span style="color:#d97706;font-weight:500">🔧 Setup:</span>
+                <span id="p-sub-setup" class="font-medium" style="color:#d97706">R$ 0,00</span>
+              </div>
+              <div id="row-sub-rec" class="flex justify-between" style="display:none">
+                <span style="color:#1d4ed8;font-weight:500">🔄 Recorrente/mês:</span>
+                <span id="p-sub-rec" class="font-medium" style="color:#1d4ed8">R$ 0,00</span>
+              </div>
+              <div id="row-sub-serv" class="flex justify-between" style="display:none">
+                <span class="text-gray-500">⚙️ Serviços:</span>
+                <span id="p-sub-serv" class="font-medium">R$ 0,00</span>
+              </div>
             </div>
-            <div class="flex justify-between text-orange-700"><span>(+) Imposto:</span><span id="p-valor-imposto">R$ 0,00</span></div>
-            <div class="flex justify-between font-bold border-t border-gray-200 pt-1"><span>TOTAL:</span><span id="p-total" class="text-blue-700">R$ 0,00</span></div>
+            <!-- Totais consolidados -->
+            <div class="space-y-1">
+              <div class="flex justify-between"><span class="text-gray-500">Subtotal geral:</span><span id="p-subtotal" class="font-medium">R$ 0,00</span></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-gray-500 flex-shrink-0">Desconto geral %:</span>
+                <input id="p-desc-geral" class="inp text-right w-20 py-0.5" type="number" min="0" max="100" step="0.5" value="${p.descontoGeral||0}" oninput="recalcTotais()"></div>
+              <div class="flex justify-between"><span class="text-gray-500">Subtotal c/ desconto:</span><span id="p-subtotal-desc" class="font-medium">R$ 0,00</span></div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-gray-500 flex-shrink-0">Imposto %:</span>
+                <input id="p-imposto" class="inp text-right w-20 py-0.5" type="number" min="0" max="100" step="0.01" value="${impostoInicial||0}" oninput="recalcTotais()" title="Pré-preenchido com o imposto da unidade. Editável por proposta.">
+              </div>
+              <div class="flex justify-between text-orange-700"><span>(+) Imposto:</span><span id="p-valor-imposto">R$ 0,00</span></div>
+              <div class="flex justify-between font-bold border-t border-gray-200 pt-1 mt-1"><span>TOTAL:</span><span id="p-total" class="text-blue-700">R$ 0,00</span></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    ${aguardando?`
+    <div style="background:#fefce8;border:1px solid #fde047;border-radius:.5rem;padding:.75rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.625rem">
+      <svg style="width:1.1rem;height:1.1rem;color:#ca8a04;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span style="font-size:.85rem;color:#92400e;font-weight:500">Esta proposta está aguardando aprovação do Gestor de Serviços. Edições estão bloqueadas.</span>
+    </div>`:''}
+
     <div class="flex items-center justify-between pt-2 border-t border-gray-100">
       <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="delProposta('${p.id}')">Excluir</button>`:''}</div>
       <div class="flex gap-2">
         <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-        ${isEdit?`<button class="btn btn-secondary" onclick="saveProposta('${p.id}',false);viewProposta('${p.id}')">Salvar e Ver PDF</button>`:''}
-        <button class="btn btn-primary" onclick="saveProposta('${p.id||''}',true)">${isEdit?'Salvar':'Criar Proposta'}</button>
+        ${isEdit&&!aguardando?`<button class="btn btn-secondary" onclick="saveProposta('${p.id}',false);viewProposta('${p.id}')">Salvar e Ver PDF</button>`:''}
+        ${isEdit?`<button class="btn btn-secondary" onclick="viewProposta('${p.id}')">Ver PDF</button>`:''}
+        ${podeSubmeter?`<button class="btn" style="background:#d97706;color:#fff;border:none" onclick="submeterAprovacao('${p.id}')">📋 Submeter para Aprovação</button>`:''}
+        ${!aguardando?`<button class="btn btn-primary" onclick="saveProposta('${p.id||''}',true)">${isEdit?'Salvar':'Criar Proposta'}</button>`:''}
       </div>
     </div>
   </div>`
 }
 
+function _tipoItemLabel(t){return{setup:'🔧 Setup',recorrente:'🔄 Recorrente',servico:'⚙️ Serviço'}[t]||'⚙️ Serviço'}
+function _tipoItemColor(t){return{setup:'#d97706',recorrente:'#1d4ed8',servico:'#374151'}[t]||'#374151'}
+
 function renderItensTable(cat){
   cat=cat||DB.all('catalogo').filter(c=>c.ativo)
   if(_propostaItens.length===0){
-    return `<div class="p-4 text-center text-sm text-gray-400">Nenhum item. Clique em "+ Adicionar Item".</div>`
+    return `<div class="p-4 text-center text-sm text-gray-400">Nenhum item. Clique em "+ Adicionar Item" ou "📦 Adicionar Pacote".</div>`
   }
   return `<table class="w-full text-xs">
     <thead><tr class="bg-gray-50 border-b border-gray-200">
       <th class="th py-1.5">Do Catálogo / Descrição</th>
-      <th class="th py-1.5 w-20 text-center">Horas/Qtd</th>
-      <th class="th py-1.5 w-24 text-right">Valor Unit.</th>
-      <th class="th py-1.5 w-14 text-center">Desc%</th>
-      <th class="th py-1.5 w-24 text-right">Total</th>
-      <th class="th py-1.5 w-6"></th>
+      <th class="th py-1.5 text-center" style="min-width:130px;white-space:nowrap">Tipo</th>
+      <th class="th py-1.5 text-center" style="min-width:120px;white-space:nowrap">Horas/Qtd</th>
+      <th class="th py-1.5 text-right" style="min-width:120px;white-space:nowrap">Valor Unit.</th>
+      <th class="th py-1.5 text-center" style="min-width:90px;white-space:nowrap">Desc%</th>
+      <th class="th py-1.5 text-right" style="min-width:120px;white-space:nowrap">Total</th>
+      <th class="th py-1.5" style="min-width:28px"></th>
     </tr></thead>
     <tbody>${_propostaItens.map((item,i)=>{
       const total=calcItemTotal(item)
-      return `<tr class="border-b border-gray-100">
+      const tipo=item.tipoItem||item.tipoPacote||'servico'
+      const rowBg=tipo==='setup'?'#fffbeb':tipo==='recorrente'?'#eff6ff':'#fff'
+      return `<tr class="border-b border-gray-100" style="background:${rowBg}">
         <td class="td py-1.5">
-          <select class="inp py-0.5 text-xs mb-1" onchange="applyFromCatalog(${i},this.value)">
+          <select class="inp py-0.5 text-xs mb-1 w-full" onchange="applyFromCatalog(${i},this.value)">
             <option value="">— Personalizado —</option>
             ${cat.map(c=>`<option value="${c.id}" ${item.catalogoId===c.id?'selected':''}>${c.codigo?c.codigo+' — ':''} ${c.nome}</option>`).join('')}
           </select>
-          <input class="inp py-0.5 text-xs" value="${H.esc(item.descricao||'')}" placeholder="Descrição..." oninput="_propostaItens[${i}].descricao=this.value;recalcTotais()">
+          <input class="inp py-0.5 text-xs w-full" value="${H.esc(item.descricao||'')}" placeholder="Descrição..." oninput="_propostaItens[${i}].descricao=this.value;recalcTotais()">
         </td>
-        <td class="td py-1.5"><input class="inp py-0.5 text-right" type="number" min="0" step="0.5" value="${item.horas||item.quantidade||0}" oninput="_propostaItens[${i}].horas=parseFloat(this.value)||0;recalcTotais()"></td>
-        <td class="td py-1.5"><input class="inp py-0.5 text-right" type="number" min="0" step="0.01" value="${item.valorHora||item.valorUnitario||0}" oninput="_propostaItens[${i}].valorHora=parseFloat(this.value)||0;recalcTotais()"></td>
-        <td class="td py-1.5"><input class="inp py-0.5 text-center" type="number" min="0" max="100" step="1" value="${item.descontoPercentual||0}" oninput="_propostaItens[${i}].descontoPercentual=parseFloat(this.value)||0;recalcTotais()"></td>
-        <td class="td py-1.5 text-right font-semibold item-total-${i}">${H.cur(total)}</td>
+        <td class="td py-1.5" style="min-width:130px">
+          <select class="inp py-0.5" onchange="_propostaItens[${i}].tipoItem=this.value;refreshItensTable()" style="font-size:.75rem;width:100%">
+            <option value="servico" ${tipo==='servico'?'selected':''}>⚙️ Serviço</option>
+            <option value="setup"   ${tipo==='setup'?'selected':''}>🔧 Setup</option>
+            <option value="recorrente" ${tipo==='recorrente'?'selected':''}>🔄 Recorrente</option>
+          </select>
+        </td>
+        <td class="td py-1.5" style="min-width:120px">
+          ${item.respostasEscopo
+            ? `<div style="display:flex;align-items:center;gap:.25rem">
+                <input class="inp py-0.5 text-right" type="number" value="${item.horas||0}" readonly
+                  style="background:#f0fdf4;border-color:#86efac;color:#15803d;font-weight:600;cursor:not-allowed;width:70px"
+                  title="🔒 Horas definidas pelo escopo — não editável manualmente">
+                <button onclick="reeditarEscopo(${i})" title="Clique para redefinir o escopo"
+                  style="background:none;border:1px solid #bfdbfe;border-radius:.375rem;padding:.2rem .4rem;cursor:pointer;font-size:.8rem;color:#1d4ed8;flex-shrink:0;line-height:1">🔒</button>
+              </div>`
+            : `<input class="inp py-0.5 text-right" type="number" min="0" step="0.5" value="${item.horas||item.quantidade||0}" style="width:100%" oninput="_propostaItens[${i}].horas=parseFloat(this.value)||0;recalcTotais()">`
+          }
+        </td>
+        <td class="td py-1.5" style="min-width:120px"><input class="inp py-0.5 text-right" type="number" min="0" step="0.01" value="${item.valorHora||item.valorUnitario||0}" style="width:100%" oninput="_propostaItens[${i}].valorHora=parseFloat(this.value)||0;recalcTotais()"></td>
+        <td class="td py-1.5" style="min-width:90px"><input class="inp py-0.5 text-center" type="number" min="0" max="100" step="1" value="${item.descontoPercentual||0}" style="width:100%" oninput="_propostaItens[${i}].descontoPercentual=parseFloat(this.value)||0;recalcTotais()"></td>
+        <td class="td py-1.5 text-right font-semibold item-total-${i}" style="color:${_tipoItemColor(tipo)}">${H.cur(total)}</td>
         <td class="td py-1.5"><button class="text-gray-300 hover:text-red-500" onclick="removePropostaItem(${i})">&times;</button></td>
       </tr>`}).join('')}
     </tbody>
@@ -792,13 +1003,122 @@ function renderItensTable(cat){
 function applyFromCatalog(idx,catId){
   const cat=DB.find('catalogo',catId)
   if(!cat)return
+  // Pré-aplica dados básicos
   _propostaItens[idx].catalogoId=catId
   _propostaItens[idx].descricao=cat.nome
-  _propostaItens[idx].horas=cat.tipoPreco==='por_hora'?(cat.esforcoMin??cat.horasPadrao??0):1
   _propostaItens[idx].valorHora=cat.tipoPreco==='por_hora'?(cat.valorHora||175):(cat.valorFixo||0)
   _propostaItens[idx].descontoPercentual=0
-  refreshItensTable()
+  // Se o item tem perguntas de escopo configuradas, abre questionário
+  if(cat.perguntas&&cat.perguntas.length>0){
+    openQuestionario(idx,cat)
+  } else {
+    _propostaItens[idx].horas=cat.tipoPreco==='por_hora'?(cat.esforcoMin??cat.horasPadrao??0):1
+    refreshItensTable()
+  }
 }
+
+// ─── Motor de Escopo Inteligente ────────────────────────────────────────────
+function openQuestionario(idx,cat){
+  _qIdx=idx; _qCat=cat; _qRespostas={}
+  document.getElementById('q-titulo').textContent=cat.nome
+  document.getElementById('q-subtitulo').textContent=cat.produto||''
+  renderQuestionario()
+  document.getElementById('q-overlay').style.display='flex'
+}
+function closeQuestionario(){
+  document.getElementById('q-overlay').style.display='none'
+  _qIdx=-1; _qCat=null; _qRespostas={}
+}
+function renderQuestionario(){
+  const perguntas=_qCat?.perguntas||[]
+  const wrap=document.getElementById('q-perguntas')
+  if(!wrap)return
+  wrap.innerHTML=perguntas.map((q,qi)=>{
+    const respondida=_qRespostas[q.id]!==undefined
+    return `<div style="margin-bottom:1rem;border:1px solid ${respondida?'#bfdbfe':'#e5e7eb'};border-radius:.625rem;overflow:hidden;transition:border-color .2s">
+      <div style="padding:.625rem .875rem;background:${respondida?'#eff6ff':'#f9fafb'};display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;background:${respondida?'#1d4ed8':'#d1d5db'};color:#fff;font-size:.7rem;font-weight:700;flex-shrink:0">${qi+1}</span>
+          <span style="font-size:.875rem;font-weight:600;color:#111827">${H.esc(q.pergunta)}</span>
+        </div>
+        ${q.impacto==='base'?`<span style="font-size:.65rem;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:.25rem;padding:.1rem .4rem;font-weight:600">BASE</span>`
+          :`<span style="font-size:.65rem;background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;border-radius:.25rem;padding:.1rem .4rem;font-weight:600">+ADICIONAL</span>`}
+      </div>
+      <div style="padding:.625rem .875rem;display:flex;flex-wrap:wrap;gap:.5rem">
+        ${(q.opcoes||[]).map((op,oi)=>{
+          const sel=_qRespostas[q.id]===oi
+          return `<button onclick="responderQ('${q.id}',${oi})"
+            style="padding:.45rem .9rem;border-radius:.5rem;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .15s;
+              border:2px solid ${sel?'#1d4ed8':'#e5e7eb'};
+              background:${sel?'#1d4ed8':'#fff'};
+              color:${sel?'#fff':'#374151'}">
+            ${H.esc(op.label)}
+            <span style="font-size:.7rem;opacity:.75;margin-left:.3rem">${op.horas>0?'(+'+op.horas+'h)':op.horas===0?'(0h)':'('+op.horas+'h)'}</span>
+          </button>`
+        }).join('')}
+      </div>
+    </div>`
+  }).join('')
+  atualizarPreviewQ()
+}
+function responderQ(pergId,opcaoIdx){
+  _qRespostas[pergId]=opcaoIdx
+  renderQuestionario()
+}
+function calcHorasQ(){
+  const perguntas=_qCat?.perguntas||[]
+  let base=null; let adicional=0
+  perguntas.forEach(q=>{
+    const oIdx=_qRespostas[q.id]
+    if(oIdx===undefined)return
+    const op=q.opcoes[oIdx]
+    if(!op)return
+    const h=parseFloat(op.horas)||0
+    if(q.impacto==='base') base=h
+    else adicional+=h
+  })
+  return (base!==null?base:(_qCat?.esforcoMin||0))+adicional
+}
+function atualizarPreviewQ(){
+  const perguntas=_qCat?.perguntas||[]
+  const respondidas=perguntas.filter(q=>_qRespostas[q.id]!==undefined).length
+  const total=perguntas.length
+  const horas=calcHorasQ()
+  const prev=document.getElementById('q-horas-preview')
+  if(prev) prev.textContent=respondidas>0?`${horas}h`:'—'
+  const btn=document.getElementById('q-aplicar-btn')
+  if(btn){
+    const obrigatorias=perguntas.filter(q=>q.obrigatoria!==false)
+    const ok=obrigatorias.every(q=>_qRespostas[q.id]!==undefined)
+    btn.disabled=!ok
+    btn.style.opacity=ok?'1':'.5'
+    btn.style.cursor=ok?'pointer':'not-allowed'
+  }
+}
+function aplicarQuestionario(){
+  if(_qIdx<0||!_qCat)return
+  const perguntas=_qCat.perguntas||[]
+  const obrigatorias=perguntas.filter(q=>q.obrigatoria!==false)
+  if(!obrigatorias.every(q=>_qRespostas[q.id]!==undefined)){
+    alert('Responda todas as perguntas obrigatórias antes de continuar.')
+    return
+  }
+  _propostaItens[_qIdx].horas=calcHorasQ()
+  _propostaItens[_qIdx].respostasEscopo=JSON.parse(JSON.stringify(_qRespostas))
+  refreshItensTable()
+  closeQuestionario()
+}
+
+function reeditarEscopo(idx){
+  const item=_propostaItens[idx]
+  if(!item||!item.catalogoId)return
+  const cat=DB.find('catalogo',item.catalogoId)
+  if(!cat||!cat.perguntas||cat.perguntas.length===0)return
+  // Restaura respostas anteriores
+  _qRespostas=item.respostasEscopo?JSON.parse(JSON.stringify(item.respostasEscopo)):{}
+  openQuestionario(idx,cat)
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function calcItemTotal(item){
   const h=item.horas||item.quantidade||0
@@ -808,13 +1128,29 @@ function calcItemTotal(item){
 }
 
 function recalcTotais(){
-  const subtotal=_propostaItens.reduce((a,i)=>a+calcItemTotal(i),0)
+  let subSetup=0,subRec=0,subServ=0
+  _propostaItens.forEach(item=>{
+    const t=item.tipoItem||item.tipoPacote||'servico'
+    const v=calcItemTotal(item)
+    if(t==='setup') subSetup+=v
+    else if(t==='recorrente') subRec+=v
+    else subServ+=v
+  })
+  const subtotal=subSetup+subRec+subServ
   const desc=parseFloat(document.getElementById('p-desc-geral')?.value)||0
   const subtotalDesc=subtotal*(1-desc/100)
   const imposto=parseFloat(document.getElementById('p-imposto')?.value)||0
   const valorImposto=subtotalDesc*(imposto/100)
   const total=subtotalDesc+valorImposto
   const el=id=>document.getElementById(id)
+  // Sub-totais por tipo
+  if(el('p-sub-setup'))    el('p-sub-setup').textContent=H.cur(subSetup)
+  if(el('p-sub-rec'))      el('p-sub-rec').textContent=H.cur(subRec)
+  if(el('p-sub-serv'))     el('p-sub-serv').textContent=H.cur(subServ)
+  // Linha de visibilidade (oculta quando zero)
+  const rowSetup=el('row-sub-setup'); if(rowSetup) rowSetup.style.display=subSetup>0?'flex':'none'
+  const rowRec=el('row-sub-rec');     if(rowRec)   rowRec.style.display=subRec>0?'flex':'none'
+  const rowServ=el('row-sub-serv');   if(rowServ)  rowServ.style.display=subServ>0?'flex':'none'
   if(el('p-subtotal'))     el('p-subtotal').textContent=H.cur(subtotal)
   if(el('p-subtotal-desc'))el('p-subtotal-desc').textContent=H.cur(subtotalDesc)
   if(el('p-valor-imposto'))el('p-valor-imposto').textContent=H.cur(valorImposto)
@@ -824,6 +1160,8 @@ function recalcTotais(){
     const row=document.querySelector(`.item-total-${i}`)
     if(row)row.textContent=H.cur(calcItemTotal(item))
   })
+  // Recalcular parcelas se parcelamento ativo
+  recalcParcelas()
 }
 
 function refreshItensTable(){
@@ -831,8 +1169,120 @@ function refreshItensTable(){
   recalcTotais()
 }
 
+// ─── Parcelamento Inteligente ───────────────────────────────────────────────
+function _getTotalAtual(){
+  let s=0; _propostaItens.forEach(i=>s+=calcItemTotal(i))
+  const desc=parseFloat(document.getElementById('p-desc-geral')?.value)||0
+  const imp=parseFloat(document.getElementById('p-imposto')?.value)||0
+  const sd=s*(1-desc/100)
+  return sd*(1+imp/100)
+}
+
+function detectarParcelamento(val){
+  const m=(val||'').trim().match(/^(\d+)\s*[xX]$/)
+  const container=document.getElementById('parcelas-container')
+  if(!container) return
+  if(!m){
+    if(!m) _propostaParcelas=[]
+    container.style.display='none'
+    return
+  }
+  const n=parseInt(m[1])
+  if(n<2||n>60){ container.style.display='none'; return }
+  // Só regenera as parcelas se o número mudou
+  if(_propostaParcelas.length!==n){
+    const total=_getTotalAtual()
+    const base=Math.floor((total/n)*100)/100
+    const resto=Math.round((total - base*n)*100)/100
+    _propostaParcelas=Array.from({length:n},(_,i)=>({
+      numero:i+1,
+      vencimento:'',
+      valor:i===n-1? Math.round((base+resto)*100)/100 : base
+    }))
+  }
+  renderParcelasTable()
+  container.style.display='block'
+}
+
+function renderParcelasTable(){
+  const total=_getTotalAtual()
+  const lbl=document.getElementById('parcelas-total-label')
+  if(lbl) lbl.textContent=H.cur(total)
+  const wrap=document.getElementById('parcelas-table-wrap')
+  if(!wrap) return
+  wrap.innerHTML=`
+  <table class="w-full text-sm" style="border-collapse:collapse">
+    <thead><tr style="background:#f0f9ff">
+      <th class="th py-1.5 text-center w-16">#</th>
+      <th class="th py-1.5">Vencimento</th>
+      <th class="th py-1.5 text-right">Valor</th>
+      <th class="th py-1.5 text-right w-24">% do Total</th>
+    </tr></thead>
+    <tbody>
+      ${_propostaParcelas.map((p,i)=>{
+        const pct=total>0?((p.valor/total)*100).toFixed(1):'0.0'
+        return `<tr class="border-b border-gray-100">
+          <td class="td py-1.5 text-center">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;border-radius:50%;background:#1d4ed8;color:#fff;font-size:.72rem;font-weight:700">${p.numero}</span>
+          </td>
+          <td class="td py-1.5">
+            <input type="date" class="inp py-0.5" style="max-width:160px" value="${p.vencimento||''}"
+              onchange="_propostaParcelas[${i}].vencimento=this.value">
+          </td>
+          <td class="td py-1.5 text-right">
+            <input type="number" class="inp py-0.5 text-right" style="max-width:140px;font-weight:600;color:#1d4ed8"
+              step="0.01" min="0" value="${p.valor}"
+              onchange="_propostaParcelas[${i}].valor=parseFloat(this.value)||0;renderParcelasTable()">
+          </td>
+          <td class="td py-1.5 text-right text-gray-500 text-xs">${pct}%</td>
+        </tr>`
+      }).join('')}
+    </tbody>
+    <tfoot>
+      <tr style="background:#f9fafb;border-top:2px solid #e5e7eb">
+        <td colspan="2" class="td py-1.5 text-right text-gray-500 font-medium">Total parcelado:</td>
+        <td class="td py-1.5 text-right font-bold" style="color:${Math.abs(_propostaParcelas.reduce((a,p)=>a+p.valor,0)-total)<0.02?'#16a34a':'#dc2626'}">
+          ${H.cur(_propostaParcelas.reduce((a,p)=>a+p.valor,0))}
+        </td>
+        <td class="td py-1.5 text-right text-xs ${Math.abs(_propostaParcelas.reduce((a,p)=>a+p.valor,0)-total)<0.02?'text-green-600':'text-red-600'}">
+          ${Math.abs(_propostaParcelas.reduce((a,p)=>a+p.valor,0)-total)<0.02?'✓ OK':'⚠ Diverge'}
+        </td>
+      </tr>
+    </tfoot>
+  </table>`
+}
+
+function sugerirDatas(){
+  const hoje=new Date()
+  _propostaParcelas=_propostaParcelas.map((p,i)=>{
+    const dt=new Date(hoje)
+    dt.setMonth(dt.getMonth()+i+1)
+    // Ajusta para o último dia do mês se necessário
+    if(dt.getDate()!==hoje.getDate()){
+      dt.setDate(0) // vai para o último dia do mês anterior
+    }
+    return {...p, vencimento:dt.toISOString().slice(0,10)}
+  })
+  renderParcelasTable()
+}
+
+function recalcParcelas(){
+  const cond=(document.getElementById('p-cond')?.value||'').trim()
+  const m=cond.match(/^(\d+)\s*[xX]$/)
+  if(!m||_propostaParcelas.length===0) return
+  const n=_propostaParcelas.length
+  const total=_getTotalAtual()
+  const base=Math.floor((total/n)*100)/100
+  const resto=Math.round((total - base*n)*100)/100
+  _propostaParcelas=_propostaParcelas.map((p,i)=>({
+    ...p, valor: i===n-1? Math.round((base+resto)*100)/100 : base
+  }))
+  renderParcelasTable()
+}
+// ───────────────────────────────────────────────────────────────────────────
+
 function addPropostaItem(){
-  _propostaItens.push({descricao:'',horas:0,valorHora:0,descontoPercentual:0})
+  _propostaItens.push({descricao:'',horas:0,valorHora:0,descontoPercentual:0,tipoItem:'servico'})
   refreshItensTable()
 }
 
@@ -840,8 +1290,94 @@ function removePropostaItem(i){
   _propostaItens.splice(i,1); refreshItensTable()
 }
 
+function openPacoteSelector(){
+  const pacotes=DB.all('pacotes').filter(p=>p.ativo!==false)
+  const el=document.getElementById('pac-selector-list')
+  if(!el) return
+  if(pacotes.length===0){
+    el.innerHTML=`<p style="text-align:center;color:#9ca3af;font-size:.875rem;padding:1rem">Nenhum pacote ativo cadastrado.</p>`
+  } else {
+    const tierColors={Bronze:'#d97706',Prata:'#6b7280',Ouro:'#b45309'}
+    const tierBg={Bronze:'#fffbeb',Prata:'#f9fafb',Ouro:'#fefce8'}
+    el.innerHTML=pacotes.map(p=>{
+      const tier=p.nome.includes('Bronze')?'Bronze':p.nome.includes('Prata')?'Prata':p.nome.includes('Ouro')?'Ouro':''
+      const cor=tierColors[tier]||'#3b82f6'
+      const bg=tierBg[tier]||'#eff6ff'
+      return `<div onclick="addPacoteToItens('${p.id}')" style="cursor:pointer;border:2px solid ${cor};border-radius:.625rem;padding:.75rem 1rem;background:${bg};transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='none'">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem">
+          <span style="font-weight:600;color:#111827;font-size:.9rem">${H.esc(p.nome)}</span>
+          ${tier?`<span style="font-size:.7rem;font-weight:700;color:${cor};background:#fff;border:1px solid ${cor};border-radius:.25rem;padding:.1rem .4rem">${tier.toUpperCase()}</span>`:''}
+        </div>
+        ${p.descricao?`<p style="font-size:.78rem;color:#6b7280;margin-bottom:.5rem">${H.esc(p.descricao)}</p>`:''}
+        <div style="display:flex;gap:1.25rem;font-size:.8rem">
+          <span style="color:#374151"><strong>Setup:</strong> ${H.cur(p.valorSetup||0)}</span>
+          <span style="color:#374151"><strong>Recorrente:</strong> ${H.cur(p.valorRecorrente||0)}<span style="color:#9ca3af">/mês</span></span>
+        </div>
+      </div>`
+    }).join('')
+  }
+  document.getElementById('pac-selector-overlay').style.display='flex'
+}
+
+function closePacoteSelector(){
+  document.getElementById('pac-selector-overlay').style.display='none'
+}
+
+function addPacoteToItens(pacoteId){
+  const p=DB.find('pacotes',pacoteId)
+  if(!p) return
+  _propostaItens.push({descricao:`Setup — ${p.nome}`,horas:1,valorHora:p.valorSetup||0,descontoPercentual:0,pacoteId:p.id,tipoItem:'setup'})
+  _propostaItens.push({descricao:`Recorrente — ${p.nome}`,horas:1,valorHora:p.valorRecorrente||0,descontoPercentual:0,pacoteId:p.id,tipoItem:'recorrente'})
+  refreshItensTable()
+  closePacoteSelector()
+}
+
+function submeterAprovacao(propostaId){
+  const p=DB.find('propostas',propostaId)
+  if(!p){alert('Proposta não encontrada.');return}
+  if(p.status==='aguardando_aprovacao'){alert('Esta proposta já está aguardando aprovação.');return}
+  const obs=prompt('Observação para o Gestor de Serviços (opcional):','')
+  if(obs===null) return  // cancelou
+  const eu=AUTH.currentUser()
+  // Salva registro de aprovação
+  DB.insert('aprovacoes',{
+    propostaId,
+    propostaNumero:p.numero||'—',
+    propostaValorTotal:p.valorTotal||0,
+    solicitadoPorId:eu?.id||'',
+    solicitadoPorNome:eu?.nome||'Sistema',
+    observacaoSolicitante:obs||'',
+    status:'pendente',
+    dataSubmissao:new Date().toISOString(),
+  })
+  // Muda status da proposta
+  DB.update('propostas',propostaId,{status:'aguardando_aprovacao'})
+  alert('✓ Proposta submetida para aprovação!\nO Gestor de Serviços será notificado.')
+  closeModal()
+  navigate('propostas')
+  // Atualiza badge
+  _atualizarBadgeAprovacoes()
+}
+
+function _atualizarBadgeAprovacoes(){
+  const pendentes=DB.all('aprovacoes').filter(a=>a.status==='pendente').length
+  const badge=document.getElementById('aprov-badge')
+  if(badge){
+    badge.textContent=pendentes||''
+    badge.style.display=pendentes?'inline-flex':'none'
+  }
+}
+
 function saveProposta(id, andClose=true){
-  const subtotal=_propostaItens.reduce((a,i)=>a+calcItemTotal(i),0)
+  let valorTotalSetup=0,valorTotalRecorrente=0,valorTotalServicos=0
+  _propostaItens.forEach(item=>{
+    const t=item.tipoItem||item.tipoPacote||'servico'
+    const v=calcItemTotal(item)
+    if(t==='setup') valorTotalSetup+=v
+    else if(t==='recorrente') valorTotalRecorrente+=v
+    else valorTotalServicos+=v
+  })
+  const subtotal=valorTotalSetup+valorTotalRecorrente+valorTotalServicos
   const descGeral=parseFloat(document.getElementById('p-desc-geral')?.value)||0
   const impostoPercentual=parseFloat(document.getElementById('p-imposto')?.value)||0
   const valorDesconto=subtotal*(descGeral/100)
@@ -859,7 +1395,11 @@ function saveProposta(id, andClose=true){
     valorDesconto,
     valorImposto,
     valorTotal:subtotalDesc+valorImposto,
+    valorTotalSetup,
+    valorTotalRecorrente,
+    valorTotalServicos,
     itens:JSON.parse(JSON.stringify(_propostaItens)),
+    parcelas:_propostaParcelas.length>0?JSON.parse(JSON.stringify(_propostaParcelas)):[],
   }
   let saved
   if(id){ saved=DB.update('propostas',id,data) }
@@ -870,7 +1410,12 @@ function saveProposta(id, andClose=true){
       const op=DB.find('oportunidades',data.oportunidadeId)
       if(op&&op.unidadeId){
         const uni=DB.find('unidades',op.unidadeId)
-        if(uni&&uni.sigla) sigla=uni.sigla.toUpperCase()
+        if(uni&&uni.sigla){
+          let s=uni.sigla.toUpperCase()
+          // Evita duplicar o prefixo TSM caso a sigla da unidade já inclua "TSM"
+          if(s.startsWith('TSM')) s=s.slice(3)
+          sigla=s
+        }
       }
     }
     data.numero=DB.nextPropostaNum(sigla)
@@ -896,7 +1441,7 @@ function viewProposta(id){
   const vend=op&&op.vendedorId?DB.find('usuarios',op.vendedorId):null
   const uni=op&&op.unidadeId?DB.find('unidades',op.unidadeId):null
 
-  const statusLabels={rascunho:'Rascunho',enviada:'Enviada',aprovada:'Aprovada',rejeitada:'Rejeitada',expirada:'Expirada'}
+  const statusLabels={rascunho:'Rascunho',aguardando_aprovacao:'Aguardando Aprovação',aprovada:'Aprovada',rejeitada:'Rejeitada',enviada:'Enviada',expirada:'Expirada'}
 
   openModal(`
   <div class="p-5">
@@ -924,7 +1469,7 @@ function viewProposta(id){
       </div>
       <!-- Meta -->
       <div style="background:#f9fafb;padding:10px 24px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;border-bottom:1px solid #e5e7eb">
-        ${[['Data',H.date(p.createdAt)],['Validade',H.date(p.validade)||'—'],['Unidade',uni?`${uni.nome} (${uni.sigla})`:'—'],['Vendedor',vend?vend.nome:'—']].map(([l,v])=>
+        ${[['Data',H.date(p.createdAt)],['Validade',H.date(p.validade)||'—'],['Unidade',uni?`${uni.nome} (${uni.sigla})`:'—'],['Executivo (ESN)',vend?vend.nome:'—']].map(([l,v])=>
           `<div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px">${l}</div><div style="font-weight:600;margin-top:2px">${v}</div></div>`
         ).join('')}
       </div>
@@ -933,7 +1478,8 @@ function viewProposta(id){
         <div style="margin-bottom:16px">
           <div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:8px">Dados do Cliente</div>
           ${cli ? `
-            <div style="font-weight:700;font-size:14px">${H.esc(cli.nome)}</div>
+            <div style="font-weight:700;font-size:14px">${H.esc(_cliNome(cli))}</div>
+            ${cli.nomeFantasia?`<div style="color:#374151;font-size:12px;font-style:italic">${H.esc(cli.nomeFantasia)}</div>`:''}
             ${cli.cpfCnpj?`<div style="color:#6b7280;font-size:12px">CNPJ: ${H.esc(cli.cpfCnpj)}</div>`:''}
             ${cli.endereco?`<div style="color:#6b7280;font-size:12px">${H.esc([cli.endereco,cli.complemento].filter(Boolean).join(', '))}</div>`:''}
             ${cli.cidade?`<div style="color:#6b7280;font-size:12px">${H.esc(cli.cidade)}${cli.estado?' — '+H.esc(cli.estado):''}</div>`:''}
@@ -954,29 +1500,66 @@ function viewProposta(id){
           <table style="width:100%;border-collapse:collapse;font-size:12px">
             <thead><tr style="background:#1d4ed8;color:#fff">
               <th style="padding:7px 10px;text-align:left;font-weight:600">Serviço / Descrição</th>
-              <th style="padding:7px 10px;text-align:center;font-weight:600;width:70px">Horas</th>
+              <th style="padding:7px 10px;text-align:center;font-weight:600;width:80px">Tipo</th>
+              <th style="padding:7px 10px;text-align:center;font-weight:600;width:60px">Horas</th>
               <th style="padding:7px 10px;text-align:right;font-weight:600;width:90px">Valor/h</th>
               <th style="padding:7px 10px;text-align:center;font-weight:600;width:50px">Desc%</th>
               <th style="padding:7px 10px;text-align:right;font-weight:600;width:90px">Total</th>
             </tr></thead>
-            <tbody>${(p.itens||[]).map((item,i)=>`
-              <tr style="background:${i%2===0?'#fff':'#f9fafb'}">
+            <tbody>${(p.itens||[]).map((item,i)=>{
+              const tipo=item.tipoItem||item.tipoPacote||'servico'
+              const tipoBg=tipo==='setup'?'#fffbeb':tipo==='recorrente'?'#eff6ff':i%2===0?'#fff':'#f9fafb'
+              const tipoLabel={'setup':'🔧 Setup','recorrente':'🔄 Recorr.','servico':'⚙️ Serviço'}[tipo]||'⚙️ Serviço'
+              const tipoColor={'setup':'#d97706','recorrente':'#1d4ed8','servico':'#374151'}[tipo]||'#374151'
+              return `<tr style="background:${tipoBg}">
                 <td style="padding:7px 10px;border-top:1px solid #f3f4f6">${H.esc(item.descricao||'—')}</td>
+                <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:center;font-size:10px;font-weight:600;color:${tipoColor}">${tipoLabel}</td>
                 <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:center;color:#6b7280">${item.horas||item.quantidade||0}</td>
                 <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:right;color:#6b7280">${H.cur(item.valorHora||item.valorUnitario||0)}</td>
                 <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:center;color:#6b7280">${item.descontoPercentual>0?item.descontoPercentual+'%':'—'}</td>
-                <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:right;font-weight:600">${H.cur(calcItemTotal(item))}</td>
-              </tr>`).join('')}
+                <td style="padding:7px 10px;border-top:1px solid #f3f4f6;text-align:right;font-weight:600;color:${tipoColor}">${H.cur(calcItemTotal(item))}</td>
+              </tr>`}).join('')}
             </tbody>
             <tfoot>
-              <tr style="background:#f9fafb"><td colspan="4" style="padding:7px 10px;text-align:right;color:#6b7280;border-top:1px solid #e5e7eb">Subtotal:</td><td style="padding:7px 10px;text-align:right;font-weight:600;border-top:1px solid #e5e7eb">${H.cur(p.valorSubtotal)}</td></tr>
+              ${p.valorTotalSetup>0?`<tr style="background:#fffbeb"><td colspan="4" style="padding:6px 10px;text-align:right;color:#d97706;border-top:1px solid #e5e7eb">🔧 Subtotal Setup:</td><td style="padding:6px 10px;text-align:right;color:#d97706;font-weight:600;border-top:1px solid #e5e7eb">${H.cur(p.valorTotalSetup)}</td></tr>`:''}
+              ${p.valorTotalRecorrente>0?`<tr style="background:#eff6ff"><td colspan="4" style="padding:6px 10px;text-align:right;color:#1d4ed8;border-top:1px solid #e5e7eb">🔄 Subtotal Recorrente/mês:</td><td style="padding:6px 10px;text-align:right;color:#1d4ed8;font-weight:600;border-top:1px solid #e5e7eb">${H.cur(p.valorTotalRecorrente)}</td></tr>`:''}
+              ${p.valorTotalServicos>0?`<tr style="background:#f9fafb"><td colspan="4" style="padding:6px 10px;text-align:right;color:#374151;border-top:1px solid #e5e7eb">⚙️ Subtotal Serviços:</td><td style="padding:6px 10px;text-align:right;font-weight:600;border-top:1px solid #e5e7eb">${H.cur(p.valorTotalServicos)}</td></tr>`:''}
+              <tr style="background:#f9fafb"><td colspan="4" style="padding:7px 10px;text-align:right;color:#6b7280;border-top:2px solid #d1d5db;font-weight:600">Subtotal Geral:</td><td style="padding:7px 10px;text-align:right;font-weight:700;border-top:2px solid #d1d5db">${H.cur(p.valorSubtotal)}</td></tr>
               ${p.descontoGeral>0?`<tr style="background:#f9fafb"><td colspan="4" style="padding:7px 10px;text-align:right;color:#dc2626;border-top:1px solid #e5e7eb">Desconto (${p.descontoGeral}%):</td><td style="padding:7px 10px;text-align:right;color:#dc2626;font-weight:600;border-top:1px solid #e5e7eb">— ${H.cur(p.valorDesconto)}</td></tr>`:''}
               ${p.impostoPercentual>0?`<tr style="background:#fff7ed"><td colspan="4" style="padding:7px 10px;text-align:right;color:#c2410c;border-top:1px solid #e5e7eb">(+) Imposto (${p.impostoPercentual}%):</td><td style="padding:7px 10px;text-align:right;color:#c2410c;font-weight:600;border-top:1px solid #e5e7eb">${H.cur(p.valorImposto||0)}</td></tr>`:''}
               <tr style="background:#1d4ed8;color:#fff"><td colspan="4" style="padding:9px 10px;text-align:right;font-weight:700">TOTAL:</td><td style="padding:9px 10px;text-align:right;font-weight:900;font-size:15px">${H.cur(p.valorTotal)}</td></tr>
             </tfoot>
           </table>
         </div>
-        ${p.condicoesPagamento?`<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:6px">Condições de Pagamento</div><div style="color:#374151;font-size:12px">${H.esc(p.condicoesPagamento)}</div></div>`:''}
+        ${p.condicoesPagamento||p.parcelas?.length?`<div style="margin-bottom:12px">
+          <div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:6px">Condições de Pagamento</div>
+          ${p.condicoesPagamento?`<div style="color:#374151;font-size:12px;margin-bottom:8px">${H.esc(p.condicoesPagamento)}</div>`:''}
+          ${p.parcelas&&p.parcelas.length>0?`
+            <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:4px">
+              <thead><tr style="background:#1d4ed8;color:#fff">
+                <th style="padding:5px 8px;text-align:center;width:40px">#</th>
+                <th style="padding:5px 8px;text-align:left">Vencimento</th>
+                <th style="padding:5px 8px;text-align:right">Valor</th>
+                <th style="padding:5px 8px;text-align:right;width:60px">%</th>
+              </thead>
+              <tbody>
+                ${p.parcelas.map((parc,i)=>`
+                  <tr style="background:${i%2===0?'#fff':'#f0f9ff'}">
+                    <td style="padding:5px 8px;text-align:center;font-weight:700;color:#1d4ed8">${parc.numero}ª</td>
+                    <td style="padding:5px 8px;color:#374151">${parc.vencimento?H.date(parc.vencimento):'A definir'}</td>
+                    <td style="padding:5px 8px;text-align:right;font-weight:600">${H.cur(parc.valor)}</td>
+                    <td style="padding:5px 8px;text-align:right;color:#6b7280">${p.valorTotal>0?((parc.valor/p.valorTotal)*100).toFixed(1)+'%':'—'}</td>
+                  </tr>`).join('')}
+              </tbody>
+              <tfoot>
+                <tr style="background:#1d4ed8;color:#fff">
+                  <td colspan="2" style="padding:5px 8px;text-align:right;font-weight:600">Total:</td>
+                  <td style="padding:5px 8px;text-align:right;font-weight:700">${H.cur(p.valorTotal)}</td>
+                  <td style="padding:5px 8px;text-align:right">100%</td>
+                </tr>
+              </tfoot>
+            </table>`:''}
+        </div>`:''}
         ${p.observacoes?`<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #dbeafe;padding-bottom:4px;margin-bottom:6px">Observações</div><div style="color:#374151;font-size:12px">${H.esc(p.observacoes)}</div></div>`:''}
         <!-- Assinaturas -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:32px;padding-top:8px">
@@ -986,7 +1569,7 @@ function viewProposta(id){
           </div>
           <div style="border-top:2px solid #d1d5db;padding-top:6px;text-align:center">
             <div style="font-weight:600">${ctt?H.esc(ctt.nome):cli&&cli.contato?H.esc(cli.contato):'Cliente / Responsável'}</div>
-            <div style="font-size:11px;color:#6b7280">${cli?H.esc(cli.nome):''}</div>
+            <div style="font-size:11px;color:#6b7280">${cli?H.esc(_cliNome(cli)):''}</div>
           </div>
         </div>
       </div>
@@ -1022,7 +1605,7 @@ function downloadPDF(id){
   doc.setTextColor(0,0,0); doc.setFontSize(8)
 
   // Info row
-  const info=[['Data:',H.date(p.createdAt)],['Validade:',H.date(p.validade)||'—'],['Unidade:',uni?`${uni.nome} (${uni.sigla})`:'—'],['Vendedor:',vend?vend.nome:'—']]
+  const info=[['Data:',H.date(p.createdAt)],['Validade:',H.date(p.validade)||'—'],['Unidade:',uni?`${uni.nome} (${uni.sigla})`:'—'],['Executivo (ESN):',vend?vend.nome:'—']]
   info.forEach(([l,v],i)=>{
     const x=M+(i<2?0:W/2-M)+(i%2===0?0:W/4-M)
     if(i===2) y=35
@@ -1038,7 +1621,8 @@ function downloadPDF(id){
   y+=10; doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); doc.setFontSize(8)
 
   if(cli){
-    doc.setFont('helvetica','bold'); doc.text(cli.nome,M,y)
+    doc.setFont('helvetica','bold'); doc.text(_cliNome(cli),M,y)
+    if(cli.nomeFantasia){y+=5;doc.setFont('helvetica','italic');doc.setFontSize(8);doc.text(cli.nomeFantasia,M,y);doc.setFont('helvetica','normal');doc.setFontSize(8)}
     doc.setFont('helvetica','normal')
     if(cli.cpfCnpj){y+=5;doc.text('CNPJ: '+cli.cpfCnpj,M,y)}
     const end=[cli.endereco,cli.complemento].filter(Boolean).join(', ')
@@ -1166,40 +1750,70 @@ function saveEmpresa(id){
 // ═══════════════════════════════════════════════════════
 // CLIENTES
 // ═══════════════════════════════════════════════════════
+function _cliNome(c){ return c.razaoSocial||c.nome||'' }
+function _cliRows(clis){
+  if(clis.length===0) return `<tr><td colspan="9" class="td text-center text-gray-400 py-6">Nenhum cliente encontrado.</td></tr>`
+  const usuarios=DB.all('usuarios')
+  return clis.map(c=>{
+    const vendedor=c.vendedorId?usuarios.find(u=>u.id===c.vendedorId):null
+    return `<tr>
+    <td class="td" style="white-space:nowrap">
+      <p class="font-mono text-sm font-medium" style="white-space:nowrap">${H.esc(c.cpfCnpj||'—')}</p>
+      <span class="badge ${c.tipo==='pessoa_fisica'?'bg-blue-50 text-blue-700':'bg-purple-50 text-purple-700'}" style="margin-top:2px">${c.tipo==='pessoa_fisica'?'P. Física':'P. Jurídica'}</span>
+    </td>
+    <td class="td text-gray-500 text-sm font-mono" style="white-space:nowrap">${H.esc(c.codigoT||'—')}</td>
+    <td class="td">
+      <p class="font-medium text-sm">${H.esc(_cliNome(c)||'—')}</p>
+      ${c.nomeFantasia?`<p class="text-xs text-gray-400">${H.esc(c.nomeFantasia)}</p>`:''}
+    </td>
+    <td class="td text-gray-500 text-sm">${c.cidade?`${H.esc(c.cidade)}${c.estado?' / '+H.esc(c.estado):''}` : '—'}</td>
+    <td class="td text-gray-500 text-sm">${H.esc(c.contato||'—')}</td>
+    <td class="td text-gray-500 text-sm">${H.esc(c.telefone||'—')}</td>
+    <td class="td text-sm">
+      ${vendedor
+        ? `<p class="font-medium text-gray-700" style="white-space:nowrap">${H.esc(vendedor.nome)}</p><p class="text-xs text-gray-400">${H.esc(H.perfil(vendedor.perfil))}</p>`
+        : '<span class="text-gray-300">—</span>'}
+    </td>
+    <td class="td">
+      ${c.cnpjBaixado
+        ? '<span class="badge bg-red-100 text-red-700">CNPJ Baixado</span>'
+        : '<span class="badge bg-green-100 text-green-700">Ativo</span>'}
+    </td>
+    <td class="td"><button class="btn btn-secondary btn-sm" onclick="editCliente('${c.id}')">Editar</button></td>
+  </tr>`}).join('')
+}
+function filtrarClientes(termo){
+  const t=(termo||'').toLowerCase().trim()
+  let clis=DB.all('clientes').sort((a,b)=>_cliNome(a).localeCompare(_cliNome(b)||'')||0)
+  if(t) clis=clis.filter(c=>[c.razaoSocial,c.nomeFantasia,c.nome,c.cpfCnpj].some(v=>v&&v.toLowerCase().includes(t)))
+  const body=document.getElementById('cli-tbody')
+  if(body) body.innerHTML=_cliRows(clis)
+  const cnt=document.getElementById('cli-count')
+  if(cnt) cnt.textContent=`${clis.length} cliente(s)`
+}
 function renderClientes(){
-  const clis=DB.all('clientes').sort((a,b)=>a.nome?.localeCompare(b.nome||'')||0)
-  return H.header('Clientes',`${clis.length} cliente(s)`,'Novo Cliente','newCliente()')+
+  const clis=DB.all('clientes').sort((a,b)=>_cliNome(a).localeCompare(_cliNome(b)||'')||0)
+  return H.header('Clientes',`<span id="cli-count">${clis.length} cliente(s)</span>`,'Novo Cliente','newCliente()')+
+  `<div class="card mb-3 p-3">
+    <div style="position:relative">
+      <svg style="position:absolute;left:.7rem;top:50%;transform:translateY(-50%);width:1rem;height:1rem;color:#9ca3af" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input id="cli-busca" class="inp" style="padding-left:2.25rem" placeholder="Filtrar por razão social, nome fantasia ou CNPJ..." oninput="filtrarClientes(this.value)">
+    </div>
+  </div>`+
   (clis.length===0?`<div class="card">${H.empty('Nenhum cliente','','Novo Cliente','newCliente()')}</div>`:
   `<div class="card overflow-hidden"><table class="w-full">
     <thead><tr>
-      <th class="th">CNPJ / CPF</th>
+      <th class="th" style="white-space:nowrap">CNPJ / CPF</th>
       <th class="th">Cód. T</th>
-      <th class="th">Nome / Razão Social</th>
+      <th class="th">Razão Social / Nome Fantasia</th>
       <th class="th">Cidade / UF</th>
       <th class="th">Contato</th>
       <th class="th">Telefone</th>
+      <th class="th">Executivo (ESN)</th>
       <th class="th">Situação</th>
       <th class="th"></th>
     </tr></thead>
-    <tbody>${clis.map(c=>{
-      return `<tr>
-        <td class="td">
-          <p class="font-mono text-sm font-medium">${H.esc(c.cpfCnpj||'—')}</p>
-          <span class="badge ${c.tipo==='pessoa_fisica'?'bg-blue-50 text-blue-700':'bg-purple-50 text-purple-700'}" style="margin-top:2px">${c.tipo==='pessoa_fisica'?'P. Física':'P. Jurídica'}</span>
-        </td>
-        <td class="td text-gray-500 text-sm font-mono">${H.esc(c.codigoT||'—')}</td>
-        <td class="td font-medium">${H.esc(c.nome||'—')}</td>
-        <td class="td text-gray-500 text-sm">${c.cidade?`${H.esc(c.cidade)}${c.estado?' / '+H.esc(c.estado):''}` : '—'}</td>
-        <td class="td text-gray-500 text-sm">${H.esc(c.contato||'—')}</td>
-        <td class="td text-gray-500 text-sm">${H.esc(c.telefone||'—')}</td>
-        <td class="td">
-          ${c.cnpjBaixado
-            ? '<span class="badge bg-red-100 text-red-700">CNPJ Baixado</span>'
-            : '<span class="badge bg-green-100 text-green-700">Ativo</span>'}
-        </td>
-        <td class="td"><button class="btn btn-secondary btn-sm" onclick="editCliente('${c.id}')">Editar</button></td>
-      </tr>`}).join('')}
-    </tbody>
+    <tbody id="cli-tbody">${_cliRows(clis)}</tbody>
   </table></div>`)
 }
 
@@ -1253,16 +1867,22 @@ function formCliente(c={}){
         </div>
       </div>
 
-      <!-- Código T + Nome / Razão Social -->
+      <!-- Código T + Razão Social -->
       <div style="display:flex;gap:.75rem">
         <div style="width:140px;flex-shrink:0">
           <label class="lbl">Código T</label>
           <input id="c-codigoT" class="inp" value="${H.esc(c.codigoT||'')}" placeholder="T-0000" style="font-family:monospace">
         </div>
         <div style="flex:1">
-          <label class="lbl">Nome / Razão Social *</label>
-          <input id="c-nome" class="inp" value="${H.esc(c.nome||'')}" placeholder="Preenchido automaticamente pela busca ou informe manualmente">
+          <label class="lbl">Razão Social *</label>
+          <input id="c-razao" class="inp" value="${H.esc(c.razaoSocial||c.nome||'')}" placeholder="Preenchido automaticamente pela busca ou informe manualmente">
         </div>
+      </div>
+
+      <!-- Nome Fantasia -->
+      <div>
+        <label class="lbl">Nome Fantasia</label>
+        <input id="c-fantasia" class="inp" value="${H.esc(c.nomeFantasia||'')}" placeholder="Nome comercial (opcional)">
       </div>
 
       <!-- Endereço + Complemento -->
@@ -1321,7 +1941,7 @@ function formCliente(c={}){
 
       <!-- Vendedor -->
       <div>
-        <label class="lbl">Vendedor Responsável</label>
+        <label class="lbl">Executivo (ESN)</label>
         <select id="c-vendedor" class="inp">
           <option value="">Nenhum</option>
           ${vendedores.map(u=>`<option value="${u.id}"${u.id===c.vendedorId?' selected':''}>${H.esc(u.nome)} — ${H.esc(H.perfil(u.perfil))}</option>`).join('')}
@@ -1381,6 +2001,9 @@ function formCliente(c={}){
       </div>
 
     </div>
+
+    ${isEdit ? _renderHistoricoCliente(c.id) : ''}
+
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
       <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir este cliente?')){DB.delete('clientes','${c.id}');closeModal();navigate('clientes')}">Excluir</button>`:''}</div>
       <div class="flex gap-2">
@@ -1388,6 +2011,44 @@ function formCliente(c={}){
         <button class="btn btn-primary" onclick="saveCliente('${c.id||''}')">Salvar</button>
       </div>
     </div>
+  </div>`
+}
+
+function _renderHistoricoCliente(clienteId){
+  const hist=DB.all('historico_transferencias')
+    .filter(h=>h.clienteId===clienteId)
+    .sort((a,b)=>new Date(b.dataExecucao)-new Date(a.dataExecucao))
+
+  if(hist.length===0) return ''
+
+  const rows=hist.map(h=>`
+    <div style="display:flex;gap:.75rem;padding:.6rem 0;${hist.indexOf(h)<hist.length-1?'border-bottom:1px solid #f3f4f6':''}">
+      <div style="flex-shrink:0;margin-top:.15rem">
+        <div style="width:1.75rem;height:1.75rem;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center">
+          <svg style="width:.9rem;height:.9rem;color:#2563eb" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        </div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+          <span style="font-size:.78rem;font-weight:600;color:#dc2626">${H.esc(h.vendedorAnteriorNome)}</span>
+          <svg style="width:.8rem;height:.8rem;color:#6b7280;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          <span style="font-size:.78rem;font-weight:600;color:#16a34a">${H.esc(h.vendedorNovoNome)}</span>
+          ${h.unidadeNome?`<span class="badge bg-blue-50 text-blue-700" style="font-size:.68rem">${H.esc(h.unidadeSigla||h.unidadeNome)}</span>`:''}
+        </div>
+        <p style="font-size:.72rem;color:#9ca3af;margin-top:.15rem">
+          ${new Date(h.dataExecucao).toLocaleString('pt-BR')} · por ${H.esc(h.executadoPorNome||'Sistema')}
+        </p>
+      </div>
+    </div>`).join('')
+
+  return `
+  <div style="border:1px solid #e5e7eb;border-radius:.5rem;overflow:hidden;margin-top:.75rem">
+    <div style="padding:.55rem .875rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:.5rem">
+      <svg style="width:.9rem;height:.9rem;color:#6b7280;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span style="font-size:.78rem;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:.04em">Histórico de Transferências</span>
+      <span class="badge bg-gray-100 text-gray-600" style="font-size:.68rem;margin-left:auto">${hist.length} registro(s)</span>
+    </div>
+    <div style="padding:.5rem .875rem">${rows}</div>
   </div>`
 }
 
@@ -1532,7 +2193,8 @@ async function buscarCNPJ(){
 
     // Preencher campos automaticamente
     const set=(id,val)=>{ const el=document.getElementById(id); if(el&&val) el.value=val }
-    set('c-nome', d.razao_social)
+    set('c-razao', d.razao_social)
+    set('c-fantasia', d.nome_fantasia||'')
     set('c-endereco', [d.logradouro, d.numero].filter(Boolean).join(', '))
     set('c-complemento', d.complemento)
     set('c-cidade', d.municipio)
@@ -1562,9 +2224,14 @@ function saveCliente(id){
   const g=i=>document.getElementById(i)?.value?.trim()
   const tipo=g('c-tipo')
   const cpfCnpj=tipo==='pessoa_juridica'?g('c-doc'):g('c-cpf')
+  const razaoSocial=g('c-razao')
+  const nomeFantasia=g('c-fantasia')
   const data={
     codigoT:g('c-codigoT'),
-    nome:g('c-nome'), tipo,
+    razaoSocial,
+    nomeFantasia,
+    nome:razaoSocial,   // alias para compatibilidade com outros módulos
+    tipo,
     cpfCnpj,
     endereco:g('c-endereco'),
     complemento:g('c-complemento'),
@@ -1578,7 +2245,7 @@ function saveCliente(id){
     cnpjBaixado:document.getElementById('c-cnpj-baixado')?.checked||false,
     ativo:true
   }
-  if(!data.nome){alert('Nome é obrigatório');return}
+  if(!data.razaoSocial){alert('Razão Social é obrigatória');return}
 
   // Salva o cliente e obtém o ID
   let savedId=id
@@ -1631,7 +2298,7 @@ function renderContatos(){
       return `<tr>
         <td class="td font-medium">${H.esc(c.nome)}${c.principal?`<span class="ml-1 badge bg-blue-50 text-blue-700">Principal</span>`:''}</td>
         <td class="td text-gray-500 text-sm">${H.esc(c.cargo||'—')}</td>
-        <td class="td text-gray-500 text-sm">${cli?H.esc(cli.nome):'—'}</td>
+        <td class="td text-gray-500 text-sm">${cli?H.esc(_cliNome(cli)):'—'}</td>
         <td class="td text-gray-500 text-sm">${H.esc(c.email||'—')}</td>
         <td class="td text-gray-500 text-sm">${H.esc(c.celular||'—')}</td>
         <td class="td"><button class="btn btn-secondary btn-sm" onclick="editContato('${c.id}')">Editar</button></td>
@@ -1698,7 +2365,12 @@ function renderCatalogo(){
       const eMax=c.esforcoMax??null
       return `<tr>
         <td class="td text-gray-400 text-xs text-center">${i+1}</td>
-        <td class="td font-medium">${H.esc(c.nome)}</td>
+        <td class="td font-medium">
+          <div class="flex items-center gap-1.5">
+            ${H.esc(c.nome)}
+            ${c.perguntas&&c.perguntas.length>0?`<span title="${c.perguntas.length} pergunta(s) de escopo configurada(s)" style="font-size:.8rem;cursor:default">🧠</span>`:''}
+          </div>
+        </td>
         <td class="td"><span class="badge ${prodColors[prod]||'bg-gray-100 text-gray-600'}">${H.esc(prod)}</span></td>
         <td class="td"><span class="badge bg-blue-50 text-blue-700">${c.tipoPreco==='por_hora'?'Por Hora':c.tipoPreco==='fixo'?'Fixo':'Sob Consulta'}</span></td>
         <td class="td text-right text-gray-500">${eMin!=null&&eMin>0?eMin+'h':'—'}</td>
@@ -1710,8 +2382,8 @@ function renderCatalogo(){
     </tbody>
   </table></div>`)
 }
-function newCatalogo(){openModal(formCatalogo({}))}
-function editCatalogo(id){openModal(formCatalogo(DB.find('catalogo',id)||{}))}
+function newCatalogo(){_catPerguntas=[];openModal(formCatalogo({}))}
+function editCatalogo(id){const c=DB.find('catalogo',id)||{};_catPerguntas=c.perguntas?JSON.parse(JSON.stringify(c.perguntas)):[];openModal(formCatalogo(c))}
 function formCatalogo(c={}){
   const isEdit=!!c.id
   const prod=c.produto||c.categoria||''
@@ -1757,6 +2429,17 @@ function formCatalogo(c={}){
       </div>
       <div><label class="lbl">Descrição</label><textarea id="cat-desc" class="inp" rows="2">${H.esc(c.descricao||'')}</textarea></div>
       <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="cat-ativo" ${c.ativo!==false?'checked':''} class="rounded"><span class="text-sm text-gray-700">Ativo (disponível nas propostas)</span></label>
+      <!-- Perguntas de Escopo -->
+      <div class="border border-blue-100 rounded-lg overflow-hidden">
+        <div style="background:#eff6ff;padding:.5rem .875rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #bfdbfe">
+          <div>
+            <span style="font-size:.82rem;font-weight:700;color:#1d4ed8">🧠 Perguntas de Escopo</span>
+            <span style="font-size:.72rem;color:#6b7280;margin-left:.5rem">Defina quais rotinas o cliente irá utilizar</span>
+          </div>
+          <button onclick="addCatPergunta()" class="btn btn-secondary btn-sm" style="font-size:.72rem">+ Adicionar Pergunta</button>
+        </div>
+        <div id="cat-perguntas-wrap" style="padding:.5rem"></div>
+      </div>
     </div>
     <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
       <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir?')){DB.delete('catalogo','${c.id}');closeModal();navigate('catalogo')}">Excluir</button>`:''}</div>
@@ -1770,20 +2453,95 @@ function toggleCatPreco(){
   document.getElementById('cat-hora-fields').style.display=t==='por_hora'?'':'none'
   document.getElementById('cat-fixo-field').style.display=t==='fixo'?'':'none'
 }
+
+// ─── Editor de Perguntas de Escopo ─────────────────────────────────────────
+function _renderCatPerguntas(){
+  const wrap=document.getElementById('cat-perguntas-wrap')
+  if(!wrap)return
+  if(_catPerguntas.length===0){
+    wrap.innerHTML=`<p style="text-align:center;color:#9ca3af;font-size:.8rem;padding:.75rem">Nenhuma pergunta configurada. Clique em "+ Adicionar Pergunta".</p>`
+    return
+  }
+  wrap.innerHTML=_catPerguntas.map((q,qi)=>`
+    <div style="border:1px solid #e5e7eb;border-radius:.5rem;margin-bottom:.625rem;overflow:hidden;background:#fff">
+      <div style="background:#f9fafb;padding:.5rem .75rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid #e5e7eb">
+        <span style="background:#1d4ed8;color:#fff;border-radius:50%;width:1.3rem;height:1.3rem;display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0">${qi+1}</span>
+        <input class="inp py-0.5 text-sm flex-1" value="${H.esc(q.pergunta||'')}" placeholder="Texto da pergunta..." oninput="_catPerguntas[${qi}].pergunta=this.value">
+        <select class="inp py-0.5 text-xs w-32" onchange="_catPerguntas[${qi}].impacto=this.value">
+          <option value="base" ${q.impacto==='base'||!q.impacto?'selected':''}>📌 Define Base</option>
+          <option value="adicional" ${q.impacto==='adicional'?'selected':''}>➕ Adicional</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:.25rem;font-size:.72rem;color:#6b7280;white-space:nowrap">
+          <input type="checkbox" ${q.obrigatoria!==false?'checked':''} onchange="_catPerguntas[${qi}].obrigatoria=this.checked">Obrig.
+        </label>
+        <button onclick="removeCatPergunta(${qi})" style="background:none;border:none;color:#ef4444;font-size:1rem;cursor:pointer;line-height:1;padding:0 .25rem" title="Remover pergunta">&times;</button>
+      </div>
+      <div style="padding:.5rem .75rem">
+        <div style="font-size:.72rem;color:#6b7280;margin-bottom:.35rem;font-weight:600">OPÇÕES (label + horas)</div>
+        ${(q.opcoes||[]).map((op,oi)=>`
+          <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem">
+            <input class="inp py-0.5 text-xs flex-1" value="${H.esc(op.label||'')}" placeholder="Ex: Sim / Não / Parcial..." oninput="_catPerguntas[${qi}].opcoes[${oi}].label=this.value">
+            <div style="display:flex;align-items:center;gap:.2rem;flex-shrink:0">
+              <input type="number" class="inp py-0.5 text-xs text-right" style="width:70px" value="${op.horas||0}" placeholder="h" oninput="_catPerguntas[${qi}].opcoes[${oi}].horas=parseFloat(this.value)||0" title="Horas para esta opção">
+              <span style="font-size:.7rem;color:#9ca3af">h</span>
+            </div>
+            <button onclick="removeCatOpcao(${qi},${oi})" style="background:none;border:none;color:#d1d5db;font-size:.9rem;cursor:pointer;padding:0" title="Remover opção">&times;</button>
+          </div>`).join('')}
+        <button onclick="addCatOpcao(${qi})" style="font-size:.72rem;color:#1d4ed8;background:none;border:1px dashed #bfdbfe;border-radius:.375rem;padding:.2rem .6rem;cursor:pointer;margin-top:.15rem">+ Opção</button>
+      </div>
+    </div>`).join('')
+}
+
+function addCatPergunta(){
+  _catPerguntas.push({
+    id:'q_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    pergunta:'',
+    impacto:'base',
+    obrigatoria:true,
+    opcoes:[
+      {label:'Sim',horas:0},
+      {label:'Não',horas:0}
+    ]
+  })
+  _renderCatPerguntas()
+}
+function removeCatPergunta(qi){
+  _catPerguntas.splice(qi,1)
+  _renderCatPerguntas()
+}
+function addCatOpcao(qi){
+  _catPerguntas[qi].opcoes.push({label:'',horas:0})
+  _renderCatPerguntas()
+}
+function removeCatOpcao(qi,oi){
+  _catPerguntas[qi].opcoes.splice(oi,1)
+  _renderCatPerguntas()
+}
+// ───────────────────────────────────────────────────────────────────────────
 function saveCatalogo(id){
   const g=i=>document.getElementById(i)?.value?.trim()
   const eMin=parseFloat(g('cat-horas-min'))||0
   const eMax=parseFloat(g('cat-horas-max'))||0
+  // Valida perguntas: toda pergunta deve ter texto e pelo menos 2 opções
+  for(let i=0;i<_catPerguntas.length;i++){
+    const q=_catPerguntas[i]
+    if(!q.pergunta.trim()){alert(`Pergunta ${i+1}: o texto é obrigatório.`);return}
+    if(!q.opcoes||q.opcoes.length<2){alert(`Pergunta ${i+1}: deve ter pelo menos 2 opções.`);return}
+    for(let j=0;j<q.opcoes.length;j++){
+      if(!q.opcoes[j].label.trim()){alert(`Pergunta ${i+1}, Opção ${j+1}: o texto é obrigatório.`);return}
+    }
+  }
   const data={
     nome:g('cat-nome'),
     produto:g('cat-prod'),
     tipoPreco:g('cat-tipo'),
     esforcoMin:eMin,
-    esforcoMax:eMax||eMin,           // se não informar máximo, iguala ao mínimo
+    esforcoMax:eMax||eMin,
     valorHora:parseFloat(g('cat-vh'))||175,
     valorFixo:parseFloat(g('cat-vf'))||0,
     descricao:g('cat-desc'),
-    ativo:document.getElementById('cat-ativo')?.checked||false
+    ativo:document.getElementById('cat-ativo')?.checked||false,
+    perguntas:JSON.parse(JSON.stringify(_catPerguntas))
   }
   if(!data.nome){alert('Nome é obrigatório');return}
   if(id) DB.update('catalogo',id,data); else DB.insert('catalogo',data)
@@ -1793,7 +2551,7 @@ function saveCatalogo(id){
 // ═══════════════════════════════════════════════════════
 // USUÁRIOS
 // ═══════════════════════════════════════════════════════
-const PERFIS=[['vendedor','Vendedor'],['arquiteto','Arquiteto de Soluções'],['gerente_unidade','Gerente da Unidade'],['gerente_geral','Gerente Geral'],['administrador','Administrador']]
+const PERFIS=[['vendedor','Executivo (ESN)'],['arquiteto','Arquiteto de Soluções'],['gestor_servicos','Gestor de Serviços'],['gerente_unidade','Gerente da Unidade'],['gerente_geral','Gerente Geral'],['administrador','Administrador']]
 function renderUsuarios(){
   const users=DB.all('usuarios').sort((a,b)=>a.nome?.localeCompare(b.nome||'')||0)
   return H.header('Usuários',`${users.length} usuário(s)`,'Novo Usuário','newUsuario()')+
@@ -1802,7 +2560,7 @@ function renderUsuarios(){
     <thead><tr><th class="th">Nome</th><th class="th">E-mail</th><th class="th">Perfil</th><th class="th">Unidade</th><th class="th">Status</th><th class="th"></th></tr></thead>
     <tbody>${users.map(u=>{
       const uni=u.unidadeId?DB.find('unidades',u.unidadeId):null
-      const perfilColors={vendedor:'bg-blue-50 text-blue-700',arquiteto:'bg-purple-50 text-purple-700',gerente_unidade:'bg-yellow-50 text-yellow-700',gerente_geral:'bg-orange-50 text-orange-700',administrador:'bg-red-50 text-red-700'}
+      const perfilColors={vendedor:'bg-blue-50 text-blue-700',arquiteto:'bg-purple-50 text-purple-700',gestor_servicos:'bg-teal-50 text-teal-700',gerente_unidade:'bg-yellow-50 text-yellow-700',gerente_geral:'bg-orange-50 text-orange-700',administrador:'bg-red-50 text-red-700'}
       return `<tr>
         <td class="td"><div class="flex items-center gap-2"><div class="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0"><span class="text-blue-700 text-xs font-bold">${(u.nome||'?').charAt(0).toUpperCase()}</span></div><span class="font-medium">${H.esc(u.nome)}</span></div></td>
         <td class="td text-gray-500 text-sm">${H.esc(u.email||'—')}</td>
@@ -1990,6 +2748,599 @@ function saveUnidade(id){
 }
 
 // ═══════════════════════════════════════════════════════
+// PACOTES
+// ═══════════════════════════════════════════════════════
+function renderPacotes(){
+  const pacs=DB.all('pacotes').sort((a,b)=>a.nome.localeCompare(b.nome))
+  const tierBadge={
+    Bronze:'bg-orange-50 text-orange-700',
+    Prata:'bg-gray-100 text-gray-600',
+    Ouro:'bg-yellow-50 text-yellow-700'
+  }
+  const tierIcon={Bronze:'🥉',Prata:'🥈',Ouro:'🥇'}
+  function _tier(nome){
+    if(nome.includes('Bronze')) return 'Bronze'
+    if(nome.includes('Prata')) return 'Prata'
+    if(nome.includes('Ouro')) return 'Ouro'
+    return ''
+  }
+  return H.header('Pacotes','Produtos com valores pré-definidos','+ Novo Pacote','newPacote()')+
+  (pacs.length===0
+    ? `<div class="card">${H.empty('Nenhum pacote cadastrado','Crie pacotes com valores pré-definidos para agilizar propostas.','+ Novo Pacote','newPacote()')}</div>`
+    : `<div class="card overflow-hidden">
+        <table class="w-full">
+          <thead>
+            <tr>
+              <th class="th">#</th>
+              <th class="th">Nome do Pacote</th>
+              <th class="th">Tier</th>
+              <th class="th">Descrição</th>
+              <th class="th text-right">Setup (único)</th>
+              <th class="th text-right">Recorrente/mês</th>
+              <th class="th">Status</th>
+              <th class="th"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pacs.map((p,i)=>{
+              const tier=_tier(p.nome)
+              const icon=tierIcon[tier]||'📦'
+              const badgeCls=tierBadge[tier]||'bg-blue-50 text-blue-700'
+              return `<tr class="${p.ativo?'':'opacity-50'}">
+                <td class="td text-gray-400 text-xs text-center">${i+1}</td>
+                <td class="td">
+                  <div class="flex items-center gap-2">
+                    <span style="font-size:1.15rem">${icon}</span>
+                    <span class="font-medium">${H.esc(p.nome)}</span>
+                  </div>
+                </td>
+                <td class="td">
+                  ${tier?`<span class="badge ${badgeCls}">${tier}</span>`:'<span class="text-gray-400 text-xs">—</span>'}
+                </td>
+                <td class="td text-gray-500 text-sm">${H.esc(p.descricao||'—')}</td>
+                <td class="td text-right font-semibold" style="color:#15803d">${H.cur(p.valorSetup||0)}</td>
+                <td class="td text-right font-semibold" style="color:#1d4ed8">${H.cur(p.valorRecorrente||0)}</td>
+                <td class="td"><span class="badge ${p.ativo?'bg-green-100 text-green-700':'bg-gray-100 text-gray-500'}">${p.ativo?'Ativo':'Inativo'}</span></td>
+                <td class="td"><button class="btn btn-secondary btn-sm" onclick="editPacote('${p.id}')">Editar</button></td>
+              </tr>`
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`
+  )
+}
+
+function newPacote(){openModal(formPacote({}))}
+function editPacote(id){openModal(formPacote(DB.find('pacotes',id)||{}))}
+
+function formPacote(p={}){
+  const isEdit=!!p.id
+  return `<div class="p-5" style="min-width:500px">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">${isEdit?'Editar':'Novo'} Pacote</h2>
+      <button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="lbl">Nome do Pacote *</label>
+        <input id="pac-nome" class="inp" value="${H.esc(p.nome||'')}" placeholder="Ex: Apply Backoffice - Bronze">
+      </div>
+      <div>
+        <label class="lbl">Descrição</label>
+        <textarea id="pac-desc" class="inp" rows="2" placeholder="Descreva o que está incluso neste pacote...">${H.esc(p.descricao||'')}</textarea>
+      </div>
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-1">Valores</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Valor de Setup (R$) <span class="text-gray-400 text-xs font-normal">cobrança única</span></label>
+          <div style="position:relative">
+            <span style="position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:.85rem;pointer-events:none">R$</span>
+            <input id="pac-setup" class="inp" type="number" min="0" step="0.01"
+              value="${p.valorSetup!=null?p.valorSetup:''}" placeholder="0,00" style="padding-left:2.2rem">
+          </div>
+        </div>
+        <div>
+          <label class="lbl">Valor Recorrente (R$) <span class="text-gray-400 text-xs font-normal">por mês</span></label>
+          <div style="position:relative">
+            <span style="position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:.85rem;pointer-events:none">R$</span>
+            <input id="pac-rec" class="inp" type="number" min="0" step="0.01"
+              value="${p.valorRecorrente!=null?p.valorRecorrente:''}" placeholder="0,00" style="padding-left:2.2rem">
+          </div>
+        </div>
+      </div>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" id="pac-ativo" ${p.ativo!==false?'checked':''} class="rounded">
+        <span class="text-sm text-gray-700">Pacote ativo</span>
+      </label>
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="if(confirm('Excluir este pacote?')){DB.delete('pacotes','${p.id}');closeModal();navigate('pacotes')}">Excluir</button>`:''}</div>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="savePacote('${p.id||''}')">Salvar</button>
+      </div>
+    </div>
+  </div>`
+}
+
+function savePacote(id){
+  const g=i=>document.getElementById(i)?.value?.trim()
+  const data={
+    nome:g('pac-nome'),
+    descricao:g('pac-desc'),
+    valorSetup:parseFloat(g('pac-setup'))||0,
+    valorRecorrente:parseFloat(g('pac-rec'))||0,
+    ativo:document.getElementById('pac-ativo')?.checked||false,
+  }
+  if(!data.nome){alert('Nome é obrigatório');return}
+  if(id) DB.update('pacotes',id,data); else DB.insert('pacotes',data)
+  closeModal(); navigate('pacotes')
+}
+
+// ═══════════════════════════════════════════════════════
+// APROVAÇÕES
+// ═══════════════════════════════════════════════════════
+function renderAprovacoes(){
+  const eu=AUTH.currentUser()
+  const isGestor=eu&&(eu.perfil==='gestor_servicos'||eu.perfil==='gerente_geral'||eu.perfil==='administrador')
+  const aprovacoes=DB.all('aprovacoes').sort((a,b)=>new Date(b.dataSubmissao)-new Date(a.dataSubmissao))
+  const pendentes=aprovacoes.filter(a=>a.status==='pendente')
+  const historico=aprovacoes.filter(a=>a.status!=='pendente')
+
+  const _cardPendente=a=>{
+    const p=DB.find('propostas',a.propostaId)||{}
+    const op=p.oportunidadeId?DB.find('oportunidades',p.oportunidadeId):null
+    const cli=op&&op.clienteId?DB.find('clientes',op.clienteId):null
+    const itens=p.itens||[]
+    const totalHoras=itens.reduce((s,i)=>s+(i.horas||i.quantidade||0),0)
+    return `
+    <div class="card p-5 mb-3">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.35rem">
+            <span class="font-mono font-bold text-blue-700">${H.esc(a.propostaNumero)}</span>
+            <span class="badge bg-yellow-100 text-yellow-800">⏳ Pendente</span>
+          </div>
+          ${cli?`<p class="font-semibold text-sm">${H.esc(_cliNome(cli))}</p>`:''}
+          ${op?`<p class="text-xs text-gray-400">${H.esc(op.titulo)}</p>`:''}
+          <div style="display:flex;gap:1.5rem;margin-top:.5rem;flex-wrap:wrap">
+            <div><p class="text-xs text-gray-400">Valor Total</p><p class="font-semibold text-sm text-green-700">${H.cur(a.propostaValorTotal)}</p></div>
+            <div><p class="text-xs text-gray-400">Total de Horas</p><p class="font-semibold text-sm">${totalHoras}h</p></div>
+            <div><p class="text-xs text-gray-400">Submetido por</p><p class="text-sm">${H.esc(a.solicitadoPorNome)}</p></div>
+            <div><p class="text-xs text-gray-400">Data</p><p class="text-sm">${new Date(a.dataSubmissao).toLocaleString('pt-BR')}</p></div>
+          </div>
+          ${a.observacaoSolicitante?`<div style="margin-top:.5rem;padding:.5rem .75rem;background:#f9fafb;border-left:3px solid #d1d5db;border-radius:0 .25rem .25rem 0"><p class="text-xs text-gray-500"><strong>Obs:</strong> ${H.esc(a.observacaoSolicitante)}</p></div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" onclick="viewProposta('${a.propostaId}')">Ver Proposta</button>
+          ${isGestor?`
+          <button class="btn btn-sm" style="background:#16a34a;color:#fff;border:none" onclick="abrirModalDecisao('${a.id}','aprovar')">✓ Aprovar</button>
+          <button class="btn btn-danger btn-sm" onclick="abrirModalDecisao('${a.id}','rejeitar')">✗ Rejeitar</button>`:''}
+        </div>
+      </div>
+    </div>`
+  }
+
+  const _rowHistorico=a=>{
+    const aprovStr=a.status==='aprovado'
+      ?`<span class="badge bg-green-100 text-green-800">✓ Aprovada</span>`
+      :`<span class="badge bg-red-100 text-red-800">✗ Rejeitada</span>`
+    return `<tr style="border-top:1px solid #f3f4f6">
+      <td class="td text-xs text-gray-500" style="white-space:nowrap">${new Date(a.dataSubmissao).toLocaleDateString('pt-BR')}</td>
+      <td class="td font-mono font-semibold text-sm text-blue-700">${H.esc(a.propostaNumero)}</td>
+      <td class="td text-sm">${H.esc(a.solicitadoPorNome)}</td>
+      <td class="td">${aprovStr}</td>
+      <td class="td text-xs text-gray-500" style="white-space:nowrap">${a.dataDecisao?new Date(a.dataDecisao).toLocaleDateString('pt-BR'):'—'}</td>
+      <td class="td text-xs text-gray-500">${H.esc(a.gestorNome||'—')}</td>
+      <td class="td text-xs text-gray-500 max-w-xs truncate">${H.esc(a.observacaoGestor||'—')}</td>
+      <td class="td"><button class="btn btn-secondary btn-sm" onclick="viewProposta('${a.propostaId}')">Ver</button></td>
+    </tr>`
+  }
+
+  return `
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 style="font-size:1.25rem;font-weight:700">Aprovações de Propostas</h1>
+      <p class="text-sm text-gray-500">Fluxo de aprovação pelo Gestor de Serviços</p>
+    </div>
+  </div>
+
+  ${!isGestor?`<div style="background:#fefce8;border:1px solid #fde047;border-radius:.5rem;padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#92400e">
+    ⚠ Apenas Gestores de Serviços, Gerentes e Administradores podem aprovar ou rejeitar propostas.
+  </div>`:''}
+
+  <!-- Pendentes -->
+  <div style="margin-bottom:1.5rem">
+    <h2 style="font-size:1rem;font-weight:600;margin-bottom:.75rem">
+      Pendentes de Aprovação
+      ${pendentes.length?`<span class="badge bg-yellow-100 text-yellow-800 ml-2">${pendentes.length}</span>`:''}
+    </h2>
+    ${pendentes.length===0
+      ?`<div class="card p-5 text-center text-gray-400 text-sm">Nenhuma proposta aguardando aprovação.</div>`
+      :pendentes.map(_cardPendente).join('')}
+  </div>
+
+  <!-- Histórico -->
+  ${historico.length>0?`
+  <div>
+    <h2 style="font-size:1rem;font-weight:600;margin-bottom:.75rem">Histórico de Aprovações</h2>
+    <div class="card overflow-hidden">
+      <table class="w-full">
+        <thead><tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb">
+          <th class="th py-2 text-xs">Submissão</th>
+          <th class="th py-2 text-xs">Proposta</th>
+          <th class="th py-2 text-xs">Solicitado por</th>
+          <th class="th py-2 text-xs">Decisão</th>
+          <th class="th py-2 text-xs">Data Decisão</th>
+          <th class="th py-2 text-xs">Gestor</th>
+          <th class="th py-2 text-xs">Observação</th>
+          <th class="th py-2 text-xs"></th>
+        </tr></thead>
+        <tbody>${historico.map(_rowHistorico).join('')}</tbody>
+      </table>
+    </div>
+  </div>`:''}
+
+  <!-- Modal de decisão (oculto) -->
+  <div id="modal-decisao" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:60;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:#fff;border-radius:.75rem;padding:1.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <h3 id="decisao-titulo" style="font-size:1rem;font-weight:700;margin-bottom:.75rem"></h3>
+      <label style="font-size:.85rem;color:#374151;font-weight:500">Observação <span id="decisao-obs-req" style="color:#dc2626"></span></label>
+      <textarea id="decisao-obs" class="inp mt-1" rows="3" placeholder="Comentário para o solicitante..."></textarea>
+      <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem">
+        <button class="btn btn-secondary" onclick="fecharModalDecisao()">Cancelar</button>
+        <button id="decisao-confirmar" class="btn btn-primary" onclick="confirmarDecisao()">Confirmar</button>
+      </div>
+    </div>
+  </div>`
+}
+
+let _decisaoAtual={aprovacaoId:null, tipo:null}
+function abrirModalDecisao(aprovacaoId, tipo){
+  _decisaoAtual={aprovacaoId, tipo}
+  const modal=document.getElementById('modal-decisao')
+  const titulo=document.getElementById('decisao-titulo')
+  const req=document.getElementById('decisao-obs-req')
+  const btn=document.getElementById('decisao-confirmar')
+  const obs=document.getElementById('decisao-obs')
+  if(!modal) return
+  if(tipo==='aprovar'){
+    titulo.textContent='✓ Aprovar Proposta'
+    req.textContent=''
+    btn.style.background='#16a34a'; btn.style.color='#fff'; btn.style.border='none'
+    btn.textContent='Aprovar'
+  } else {
+    titulo.textContent='✗ Rejeitar Proposta'
+    req.textContent='(obrigatório)'
+    btn.style.background='#dc2626'; btn.style.color='#fff'; btn.style.border='none'
+    btn.textContent='Rejeitar'
+  }
+  obs.value=''
+  modal.style.display='flex'
+  obs.focus()
+}
+function fecharModalDecisao(){
+  const modal=document.getElementById('modal-decisao')
+  if(modal) modal.style.display='none'
+  _decisaoAtual={aprovacaoId:null,tipo:null}
+}
+function confirmarDecisao(){
+  const {aprovacaoId, tipo}=_decisaoAtual
+  if(!aprovacaoId||!tipo) return
+  const obs=document.getElementById('decisao-obs')?.value?.trim()
+  if(tipo==='rejeitar'&&!obs){alert('Informe o motivo da rejeição.');return}
+  const eu=AUTH.currentUser()
+  const aprov=DB.find('aprovacoes',aprovacaoId)
+  if(!aprov) return
+  // Atualiza registro de aprovação
+  DB.update('aprovacoes',aprovacaoId,{
+    status:tipo==='aprovar'?'aprovado':'rejeitado',
+    observacaoGestor:obs||'',
+    gestorId:eu?.id||'',
+    gestorNome:eu?.nome||'Sistema',
+    dataDecisao:new Date().toISOString(),
+  })
+  // Atualiza status da proposta
+  const novoStatus=tipo==='aprovar'?'aprovada':'rascunho'
+  DB.update('propostas',aprov.propostaId,{status:novoStatus})
+  fecharModalDecisao()
+  alert(tipo==='aprovar'
+    ?'✓ Proposta aprovada! Status atualizado para "Aprovada".'
+    :'✗ Proposta rejeitada e devolvida ao solicitante como Rascunho.')
+  navigate('aprovacoes')
+}
+
+// ═══════════════════════════════════════════════════════
+// TRANSFERÊNCIA DE CONTAS
+// ═══════════════════════════════════════════════════════
+function renderTransferencia(){
+  const usuarios=DB.all('usuarios').filter(u=>u.ativo!==false)
+  const optsUsuarios=(selected='')=>usuarios
+    .map(u=>`<option value="${u.id}"${u.id===selected?' selected':''}>${H.esc(u.nome)} — ${H.esc(H.perfil(u.perfil))}</option>`)
+    .join('')
+
+  return `
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 style="font-size:1.25rem;font-weight:700">Transferência de Contas</h1>
+      <p class="text-sm text-gray-500">Reatribua todos os clientes de um Executivo (ESN) para outro em uma única operação.</p>
+    </div>
+  </div>
+
+  <!-- Painel de seleção -->
+  <div class="card p-5 mb-4">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:end">
+      <!-- Origem -->
+      <div>
+        <label class="lbl" style="font-weight:600">De (Executivo Origem)</label>
+        <select id="tr-origem" class="inp" onchange="trAtualizarPreview()">
+          <option value="">Selecione o executivo de origem...</option>
+          ${optsUsuarios()}
+        </select>
+      </div>
+
+      <!-- Seta -->
+      <div style="padding-bottom:.55rem;color:#2563eb">
+        <svg style="width:2rem;height:2rem" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+        </svg>
+      </div>
+
+      <!-- Destino -->
+      <div>
+        <label class="lbl" style="font-weight:600">Para (Executivo Destino)</label>
+        <select id="tr-destino" class="inp" onchange="trAtualizarPreview()">
+          <option value="">Selecione o executivo de destino...</option>
+          ${optsUsuarios()}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área de preview -->
+  <div id="tr-preview"></div>
+
+  <!-- Histórico de transferências -->
+  ${_renderHistoricoGlobal()}`
+}
+
+function _renderHistoricoGlobal(filtroCliente=''){
+  const hist=DB.all('historico_transferencias')
+    .sort((a,b)=>new Date(b.dataExecucao)-new Date(a.dataExecucao))
+  const filtrado=filtroCliente
+    ? hist.filter(h=>h.clienteNome?.toLowerCase().includes(filtroCliente.toLowerCase())
+        ||h.clienteFantasia?.toLowerCase().includes(filtroCliente.toLowerCase())
+        ||h.clienteCnpj?.includes(filtroCliente))
+    : hist
+
+  if(hist.length===0) return `
+  <div class="card p-5 mt-4" style="border-left:4px solid #e5e7eb">
+    <p class="font-semibold text-gray-500 text-sm">Histórico de Transferências</p>
+    <p class="text-sm text-gray-400 mt-1">Nenhuma transferência registrada ainda.</p>
+  </div>`
+
+  const rows=filtrado.length===0
+    ? `<tr><td colspan="6" class="td text-center text-gray-400 py-5">Nenhum registro encontrado para o filtro informado.</td></tr>`
+    : filtrado.map(h=>`<tr style="border-top:1px solid #f3f4f6">
+        <td class="td text-xs text-gray-500" style="white-space:nowrap">${new Date(h.dataExecucao).toLocaleString('pt-BR')}</td>
+        <td class="td">
+          <p class="font-medium text-sm">${H.esc(h.clienteNome||'—')}</p>
+          ${h.clienteFantasia?`<p class="text-xs text-gray-400">${H.esc(h.clienteFantasia)}</p>`:''}
+          ${h.clienteCnpj?`<p class="text-xs text-gray-400 font-mono">${H.esc(h.clienteCnpj)}</p>`:''}
+        </td>
+        <td class="td text-sm">
+          ${h.unidadeNome?`<span class="badge bg-blue-50 text-blue-700">${H.esc(h.unidadeSigla||h.unidadeNome)}</span>`:'<span class="text-gray-300">—</span>'}
+        </td>
+        <td class="td text-sm">
+          <p class="text-red-600 font-medium">${H.esc(h.vendedorAnteriorNome||'—')}</p>
+        </td>
+        <td class="td text-sm">
+          <p class="text-green-700 font-medium">${H.esc(h.vendedorNovoNome||'—')}</p>
+        </td>
+        <td class="td text-xs text-gray-400">${H.esc(h.executadoPorNome||'—')}</td>
+      </tr>`).join('')
+
+  return `
+  <div class="card overflow-hidden mt-4">
+    <div style="padding:.875rem 1rem;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;gap:1rem">
+      <div>
+        <p class="font-semibold text-sm">Histórico de Transferências</p>
+        <p class="text-xs text-gray-400">${hist.length} registro(s) no total</p>
+      </div>
+      <div style="position:relative;width:280px">
+        <svg style="position:absolute;left:.6rem;top:50%;transform:translateY(-50%);width:.85rem;height:.85rem;color:#9ca3af" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input class="inp" style="padding-left:2rem;font-size:.8rem" placeholder="Filtrar por cliente ou CNPJ..."
+          oninput="document.getElementById('hist-tbody').innerHTML=_renderHistoricoGlobal(this.value).match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/)?.[1]||''">
+      </div>
+    </div>
+    <table class="w-full">
+      <thead>
+        <tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb">
+          <th class="th py-2 text-xs">Data / Hora</th>
+          <th class="th py-2 text-xs">Cliente</th>
+          <th class="th py-2 text-xs">Unidade</th>
+          <th class="th py-2 text-xs" style="color:#dc2626">De (Executivo)</th>
+          <th class="th py-2 text-xs" style="color:#16a34a">Para (Executivo)</th>
+          <th class="th py-2 text-xs">Executado por</th>
+        </tr>
+      </thead>
+      <tbody id="hist-tbody">${rows}</tbody>
+    </table>
+  </div>`
+}
+
+function trAtualizarPreview(){
+  const origemId=document.getElementById('tr-origem')?.value
+  const destinoId=document.getElementById('tr-destino')?.value
+  const area=document.getElementById('tr-preview')
+  if(!area) return
+
+  // Nenhum selecionado ainda
+  if(!origemId && !destinoId){
+    area.innerHTML=''
+    return
+  }
+
+  // Validação: origem = destino
+  if(origemId && destinoId && origemId===destinoId){
+    area.innerHTML=`<div class="card p-4" style="border-left:4px solid #f59e0b;background:#fffbeb">
+      <p class="text-sm text-yellow-800 font-medium">⚠ Origem e destino são o mesmo vendedor. Selecione vendedores diferentes.</p>
+    </div>`
+    return
+  }
+
+  // Busca clientes do executivo origem
+  const clis=DB.all('clientes')
+  const origemClis=origemId
+    ? clis.filter(c=>c.vendedorId===origemId).sort((a,b)=>_cliNome(a).localeCompare(_cliNome(b)))
+    : []
+
+  const usuarios=DB.all('usuarios')
+  const origemUser=origemId?usuarios.find(u=>u.id===origemId):null
+  const destinoUser=destinoId?usuarios.find(u=>u.id===destinoId):null
+
+  if(!origemId){
+    area.innerHTML=`<div class="card p-4 text-sm text-gray-400 text-center">Selecione o executivo de origem para ver os clientes.</div>`
+    return
+  }
+
+  if(origemClis.length===0){
+    area.innerHTML=`<div class="card p-5" style="border-left:4px solid #d1d5db">
+      <p class="font-medium text-gray-700">Nenhum cliente vinculado a <strong>${H.esc(origemUser?.nome||'este executivo')}</strong>.</p>
+      <p class="text-sm text-gray-400 mt-1">Este executivo não possui clientes para transferir.</p>
+    </div>`
+    return
+  }
+
+  const rows=origemClis.map(c=>`
+    <tr style="border-top:1px solid #f3f4f6">
+      <td style="padding:.5rem .75rem;width:2.5rem">
+        <input type="checkbox" class="tr-chk rounded" value="${c.id}" checked style="width:1rem;height:1rem;cursor:pointer" onchange="trAtualizarBotao()">
+      </td>
+      <td style="padding:.5rem .75rem">
+        <p class="font-medium text-sm">${H.esc(_cliNome(c))}</p>
+        ${c.nomeFantasia?`<p class="text-xs text-gray-400">${H.esc(c.nomeFantasia)}</p>`:''}
+      </td>
+      <td style="padding:.5rem .75rem;font-family:monospace;font-size:.8rem;color:#6b7280">${H.esc(c.cpfCnpj||'—')}</td>
+      <td style="padding:.5rem .75rem;font-size:.8rem;color:#6b7280">${H.esc(c.cidade&&c.estado?c.cidade+' / '+c.estado:c.cidade||'—')}</td>
+    </tr>`).join('')
+
+  area.innerHTML=`
+  <div class="card overflow-hidden">
+    <!-- Cabeçalho do preview -->
+    <div style="background:#eff6ff;border-bottom:1px solid #dbeafe;padding:.875rem 1rem;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <p class="font-semibold text-sm text-blue-900">
+          <span id="tr-count">${origemClis.length}</span> cliente(s) encontrado(s) para
+          <strong>${H.esc(origemUser?.nome||'')}</strong>
+          ${destinoUser?`→ <strong>${H.esc(destinoUser.nome)}</strong>`:'<span class="text-yellow-600">(selecione o destino)</span>'}
+        </p>
+        <p class="text-xs text-blue-600 mt-0.5">Marque os clientes que deseja transferir</p>
+      </div>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-secondary btn-sm" onclick="trSelecionarTodos(true)">Marcar todos</button>
+        <button class="btn btn-secondary btn-sm" onclick="trSelecionarTodos(false)">Desmarcar todos</button>
+      </div>
+    </div>
+
+    <!-- Tabela de clientes -->
+    <table class="w-full">
+      <thead>
+        <tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb">
+          <th style="padding:.5rem .75rem;width:2.5rem"></th>
+          <th class="th py-2">Razão Social / Nome Fantasia</th>
+          <th class="th py-2">CNPJ / CPF</th>
+          <th class="th py-2">Cidade / UF</th>
+        </tr>
+      </thead>
+      <tbody id="tr-tbody">${rows}</tbody>
+    </table>
+
+    <!-- Rodapé com botão de ação -->
+    <div style="padding:.875rem 1rem;background:#f9fafb;border-top:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between">
+      <p id="tr-resumo" class="text-sm text-gray-600">${origemClis.length} de ${origemClis.length} clientes selecionados</p>
+      <button id="tr-btn-exec" class="btn btn-primary" onclick="trExecutar()"
+        ${!destinoId?'disabled style="opacity:.5;cursor:not-allowed"':''}>
+        Transferir clientes selecionados →
+      </button>
+    </div>
+  </div>`
+}
+
+function trSelecionarTodos(marcar){
+  document.querySelectorAll('.tr-chk').forEach(el=>el.checked=marcar)
+  trAtualizarBotao()
+}
+
+function trAtualizarBotao(){
+  const total=document.querySelectorAll('.tr-chk').length
+  const selecionados=document.querySelectorAll('.tr-chk:checked').length
+  const resumo=document.getElementById('tr-resumo')
+  if(resumo) resumo.textContent=`${selecionados} de ${total} clientes selecionados`
+}
+
+function trExecutar(){
+  const origemId=document.getElementById('tr-origem')?.value
+  const destinoId=document.getElementById('tr-destino')?.value
+  if(!origemId||!destinoId){alert('Selecione origem e destino.');return}
+  if(origemId===destinoId){alert('Origem e destino não podem ser iguais.');return}
+
+  const selecionados=[...document.querySelectorAll('.tr-chk:checked')].map(el=>el.value)
+  if(selecionados.length===0){alert('Nenhum cliente selecionado.');return}
+
+  const usuarios=DB.all('usuarios')
+  const origemUser=usuarios.find(u=>u.id===origemId)
+  const destUser=usuarios.find(u=>u.id===destinoId)
+  const executador=AUTH.currentUser()
+  if(!confirm(`Transferir ${selecionados.length} cliente(s) para ${destUser?.nome||'o executivo destino'}?\n\nEsta ação atualizará o executivo responsável de cada cliente selecionado.`)) return
+
+  // Snapshot de todos os clientes antes de alterar
+  const todosClientes=DB.all('clientes')
+  const todasUnidades=DB.all('unidades')
+
+  // Executa a transferência em lote e grava histórico
+  let ok=0
+  const dataExec=new Date().toISOString()
+  selecionados.forEach(cliId=>{
+    const cliAntes=todosClientes.find(c=>c.id===cliId)
+    if(!cliAntes) return
+    // Resolve dados da unidade anterior e nova (unidade do cliente não muda aqui, mas registramos o estado)
+    const uniAntes=cliAntes.unidadeId?todasUnidades.find(u=>u.id===cliAntes.unidadeId):null
+    const vendAntes=cliAntes.vendedorId?usuarios.find(u=>u.id===cliAntes.vendedorId):null
+    // Atualiza o cliente
+    const atualizado=DB.update('clientes',cliId,{vendedorId:destinoId})
+    if(atualizado){
+      ok++
+      // Grava registro de histórico
+      DB.insert('historico_transferencias',{
+        clienteId:cliId,
+        clienteNome:_cliNome(cliAntes),
+        clienteFantasia:cliAntes.nomeFantasia||'',
+        clienteCnpj:cliAntes.cpfCnpj||'',
+        vendedorAnteriorId:cliAntes.vendedorId||'',
+        vendedorAnteriorNome:vendAntes?.nome||'(sem vendedor)',
+        vendedorNovoId:destinoId,
+        vendedorNovoNome:destUser?.nome||'',
+        unidadeId:cliAntes.unidadeId||'',
+        unidadeNome:uniAntes?.nome||'',
+        unidadeSigla:uniAntes?.sigla||'',
+        executadoPorId:executador?.id||'',
+        executadoPorNome:executador?.nome||'Sistema',
+        dataExecucao:dataExec,
+      })
+    }
+  })
+
+  // Feedback e reset
+  alert(`✓ ${ok} cliente(s) transferido(s) com sucesso para ${destUser?.nome||''}!`)
+  document.getElementById('tr-origem').value=''
+  document.getElementById('tr-destino').value=''
+  document.getElementById('tr-preview').innerHTML=''
+  // Recarrega a página para mostrar histórico atualizado
+  navigate('transferencia')
+}
+
+// ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
 seedIfEmpty()
@@ -1999,6 +3350,408 @@ if(AUTH.isLogged()){
   showLogin()
   // Foco no campo email após carregar
   setTimeout(()=>document.getElementById('login-email')?.focus(),100)
+}
+
+// ═══════════════════════════════════════════════════════
+// DESPESAS
+// ═══════════════════════════════════════════════════════
+const DESP_TIPOS={
+  km:          {label:'🚗 Quilometragem', cor:'bg-blue-50 text-blue-700',   icone:'🚗'},
+  alimentacao: {label:'🍽️ Alimentação',   cor:'bg-orange-50 text-orange-700', icone:'🍽️'},
+  pedagio:     {label:'🛣️ Pedágio',        cor:'bg-yellow-50 text-yellow-700', icone:'🛣️'},
+  hotel:       {label:'🏨 Hotel',          cor:'bg-purple-50 text-purple-700', icone:'🏨'},
+  estacionamento:{label:'🅿️ Estacionamento',cor:'bg-teal-50 text-teal-700',   icone:'🅿️'},
+  outros:      {label:'📎 Outros',         cor:'bg-gray-100 text-gray-700',    icone:'📎'},
+}
+
+function renderDespesas(){
+  const ops=DB.all('oportunidades')
+  const users=DB.all('usuarios')
+  const despesas=DB.all('despesas').sort((a,b)=>b.data.localeCompare(a.data))
+
+  // Filtros do estado da URL / sessionStorage
+  const fOp   =sessionStorage.getItem('desp_fOp')||''
+  const fTipo  =sessionStorage.getItem('desp_fTipo')||''
+  const fUser  =sessionStorage.getItem('desp_fUser')||''
+  const fDe    =sessionStorage.getItem('desp_fDe')||''
+  const fAte   =sessionStorage.getItem('desp_fAte')||''
+
+  let lista=despesas
+  if(fOp)   lista=lista.filter(d=>d.oportunidadeId===fOp)
+  if(fTipo) lista=lista.filter(d=>d.tipo===fTipo)
+  if(fUser) lista=lista.filter(d=>d.userId===fUser)
+  if(fDe)   lista=lista.filter(d=>d.data>=fDe)
+  if(fAte)  lista=lista.filter(d=>d.data<=fAte)
+
+  // Totalizadores
+  const totalGeral=lista.reduce((s,d)=>s+d.valorTotal,0)
+  const porTipo={}
+  lista.forEach(d=>{porTipo[d.tipo]=(porTipo[d.tipo]||0)+d.valorTotal})
+
+  const summaryCards=Object.entries(DESP_TIPOS).map(([k,t])=>{
+    const v=porTipo[k]||0
+    if(v===0)return''
+    return `<div class="card text-center" style="padding:.75rem 1rem;min-width:140px">
+      <div style="font-size:1.4rem">${t.icone}</div>
+      <div style="font-size:.7rem;color:#6b7280;margin:.15rem 0">${t.label.replace(/^[^\s]+\s/,'')}</div>
+      <div style="font-weight:700;font-size:.95rem;color:#111827">${H.cur(v)}</div>
+    </div>`
+  }).join('')
+
+  return H.header('Despesas','Apontamento de despesas por oportunidade','+ Nova Despesa','newDespesa()')+
+  `<!-- Filtros -->
+  <div class="card mb-4" style="padding:.75rem 1rem">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:.625rem;align-items:end">
+      <div>
+        <label class="lbl">Oportunidade</label>
+        <select class="inp" onchange="sessionStorage.setItem('desp_fOp',this.value);navigate('despesas')">
+          <option value="">Todas as oportunidades</option>
+          ${ops.map(o=>`<option value="${o.id}" ${fOp===o.id?'selected':''}>${H.esc(o.titulo)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Tipo</label>
+        <select class="inp" onchange="sessionStorage.setItem('desp_fTipo',this.value);navigate('despesas')">
+          <option value="">Todos</option>
+          ${Object.entries(DESP_TIPOS).map(([k,t])=>`<option value="${k}" ${fTipo===k?'selected':''}>${t.label}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Colaborador</label>
+        <select class="inp" onchange="sessionStorage.setItem('desp_fUser',this.value);navigate('despesas')">
+          <option value="">Todos</option>
+          ${users.map(u=>`<option value="${u.id}" ${fUser===u.id?'selected':''}>${H.esc(u.nome)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">De</label>
+        <input type="date" class="inp" value="${fDe}" onchange="sessionStorage.setItem('desp_fDe',this.value);navigate('despesas')">
+      </div>
+      <div>
+        <label class="lbl">Até</label>
+        <input type="date" class="inp" value="${fAte}" onchange="sessionStorage.setItem('desp_fAte',this.value);navigate('despesas')">
+      </div>
+      <div>
+        <label class="lbl">&nbsp;</label>
+        <button class="btn btn-secondary" onclick="sessionStorage.removeItem('desp_fOp');sessionStorage.removeItem('desp_fTipo');sessionStorage.removeItem('desp_fUser');sessionStorage.removeItem('desp_fDe');sessionStorage.removeItem('desp_fAte');navigate('despesas')">Limpar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cards de totais -->
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem">
+    <div class="card text-center" style="padding:.75rem 1rem;min-width:160px;border:2px solid #1d4ed8">
+      <div style="font-size:1.4rem">💰</div>
+      <div style="font-size:.7rem;color:#6b7280;margin:.15rem 0">Total Geral</div>
+      <div style="font-weight:800;font-size:1.1rem;color:#1d4ed8">${H.cur(totalGeral)}</div>
+      <div style="font-size:.7rem;color:#9ca3af">${lista.length} registro(s)</div>
+    </div>
+    ${summaryCards}
+  </div>
+
+  <!-- Tabela -->
+  ${lista.length===0
+    ? `<div class="card">${H.empty('Nenhuma despesa encontrada','Registre despesas como KM, alimentação, pedágio, hotel, etc.','+ Nova Despesa','newDespesa()')}</div>`
+    : `<div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead><tr>
+            <th class="th">Data</th>
+            <th class="th">Tipo</th>
+            <th class="th">Descrição</th>
+            <th class="th">Oportunidade</th>
+            <th class="th">Colaborador</th>
+            <th class="th text-center">Qtd</th>
+            <th class="th text-right">Vlr Unit.</th>
+            <th class="th text-right">Total</th>
+            <th class="th"></th>
+          </tr></thead>
+          <tbody>
+            ${lista.map(d=>{
+              const op=ops.find(o=>o.id===d.oportunidadeId)
+              const usr=users.find(u=>u.id===d.userId)
+              const t=DESP_TIPOS[d.tipo]||DESP_TIPOS.outros
+              const isKm=d.tipo==='km'
+              return `<tr>
+                <td class="td text-gray-500 whitespace-nowrap">${H.date(d.data)}</td>
+                <td class="td"><span class="badge ${t.cor}">${t.label}</span></td>
+                <td class="td font-medium">
+                  <div class="flex items-center gap-1.5">
+                    ${H.esc(d.descricao||'—')}
+                    ${d.anexos&&d.anexos.length>0?`<span title="${d.anexos.length} anexo(s)" style="font-size:.68rem;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:.25rem;padding:.05rem .35rem;font-weight:600;cursor:pointer" onclick="verAnexosDespesa('${d.id}')">📎 ${d.anexos.length}</span>`:''}
+                  </div>
+                  ${d.observacao?`<div class="text-xs text-gray-400">${H.esc(d.observacao)}</div>`:''}
+                </td>
+                <td class="td text-gray-500 text-xs">${op?H.esc(op.titulo):'<span class="text-gray-300">Avulsa</span>'}</td>
+                <td class="td text-gray-500 text-xs">${usr?H.esc(usr.nome):'—'}</td>
+                <td class="td text-center text-gray-500">${isKm?d.quantidade+' km':d.quantidade>1?d.quantidade:'—'}</td>
+                <td class="td text-right text-gray-500">${isKm?H.cur(d.valorUnitario)+'/km':d.quantidade>1?H.cur(d.valorUnitario):'—'}</td>
+                <td class="td text-right font-semibold">${H.cur(d.valorTotal)}</td>
+                <td class="td"><button class="btn btn-secondary btn-sm" onclick="editDespesa('${d.id}')">Editar</button></td>
+              </tr>`
+            }).join('')}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f9fafb;border-top:2px solid #e5e7eb">
+              <td colspan="7" class="td text-right font-semibold text-gray-600">Total:</td>
+              <td class="td text-right font-bold text-blue-700">${H.cur(totalGeral)}</td>
+              <td class="td"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>`}
+  `
+}
+
+function newDespesa(oportunidadeId=''){
+  _despAnexos=[]
+  const eu=AUTH.currentUser()
+  openModal(formDespesa({oportunidadeId,userId:eu?.id||''}))
+}
+function editDespesa(id){
+  const d=DB.find('despesas',id)||{}
+  _despAnexos=d.anexos?JSON.parse(JSON.stringify(d.anexos)):[]
+  openModal(formDespesa(d))
+}
+
+function formDespesa(d={}){
+  const isEdit=!!d.id
+  const ops=DB.all('oportunidades').filter(o=>o.status!=='perdida'&&o.status!=='cancelada')
+  const users=DB.all('usuarios').filter(u=>u.ativo!==false)
+  const eu=AUTH.currentUser()
+  const hoje=new Date().toISOString().slice(0,10)
+  const tipo=d.tipo||'km'
+  const isKm=tipo==='km'
+
+  return `<div class="p-5" style="min-width:520px">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-bold">${isEdit?'Editar':'Nova'} Despesa</h2>
+      <button onclick="closeModal()" class="text-gray-400 text-xl">&times;</button>
+    </div>
+    <div class="space-y-3">
+      <!-- Tipo + Data -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Tipo de Despesa *</label>
+          <select id="d-tipo" class="inp" onchange="toggleDespTipo()">
+            ${Object.entries(DESP_TIPOS).map(([k,t])=>`<option value="${k}" ${tipo===k?'selected':''}>${t.label}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Data *</label>
+          <input id="d-data" class="inp" type="date" value="${d.data||hoje}">
+        </div>
+      </div>
+
+      <!-- Oportunidade + Colaborador -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Oportunidade</label>
+          <select id="d-op" class="inp">
+            <option value="">— Despesa avulsa —</option>
+            ${ops.map(o=>`<option value="${o.id}" ${d.oportunidadeId===o.id?'selected':''}>${H.esc(o.titulo)}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Colaborador *</label>
+          <select id="d-user" class="inp">
+            ${users.map(u=>`<option value="${u.id}" ${(d.userId||eu?.id)===u.id?'selected':''}>${H.esc(u.nome)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- Descrição -->
+      <div>
+        <label class="lbl">Descrição *</label>
+        <input id="d-desc" class="inp" value="${H.esc(d.descricao||'')}" placeholder="Ex: Visita ao cliente, almoço de negócios…">
+      </div>
+
+      <!-- KM fields -->
+      <div id="d-km-fields" style="display:${isKm?'block':'none'}">
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="lbl">KM Rodados *</label>
+            <input id="d-qtd" class="inp" type="number" min="0" step="1" value="${d.quantidade||''}" placeholder="Ex: 120" oninput="calcDespTotal()">
+          </div>
+          <div>
+            <label class="lbl">Valor por KM (R$)</label>
+            <input id="d-vunit" class="inp" type="number" min="0" step="0.01" value="${d.valorUnitario||0.70}" oninput="calcDespTotal()">
+          </div>
+          <div>
+            <label class="lbl">Total Calculado</label>
+            <input id="d-total-km" class="inp" type="text" readonly style="background:#f0fdf4;font-weight:700;color:#15803d" value="${d.valorTotal?H.cur(d.valorTotal):'R$ 0,00'}">
+          </div>
+        </div>
+      </div>
+
+      <!-- Valor direto (não-KM) -->
+      <div id="d-valor-field" style="display:${isKm?'none':'block'}">
+        <label class="lbl">Valor (R$) *</label>
+        <input id="d-valor" class="inp" type="number" min="0" step="0.01" value="${!isKm&&d.valorTotal?d.valorTotal:''}" placeholder="0,00">
+      </div>
+
+      <!-- Observação -->
+      <div>
+        <label class="lbl">Observação</label>
+        <textarea id="d-obs" class="inp" rows="2" placeholder="Informações adicionais…">${H.esc(d.observacao||'')}</textarea>
+      </div>
+
+      <!-- Anexos -->
+      <div>
+        <label class="lbl">Anexos <span class="text-gray-400 font-normal text-xs">(notas fiscais, comprovantes, fotos — máx. 2 MB por arquivo)</span></label>
+        <div id="d-drop-zone"
+          style="border:2px dashed #d1d5db;border-radius:.625rem;padding:1rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s"
+          ondragover="event.preventDefault();this.style.borderColor='#2563eb';this.style.background='#eff6ff'"
+          ondragleave="this.style.borderColor='#d1d5db';this.style.background=''"
+          ondrop="event.preventDefault();this.style.borderColor='#d1d5db';this.style.background='';handleDespAnexo(event.dataTransfer.files)"
+          onclick="document.getElementById('d-file-input').click()">
+          <div style="font-size:1.5rem;margin-bottom:.25rem">📎</div>
+          <div style="font-size:.8rem;color:#6b7280">Arraste arquivos aqui ou <span style="color:#2563eb;text-decoration:underline">clique para selecionar</span></div>
+          <div style="font-size:.72rem;color:#9ca3af;margin-top:.2rem">PDF, JPG, PNG, XLSX, DOCX…</div>
+        </div>
+        <input id="d-file-input" type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none" onchange="handleDespAnexo(this.files)">
+        <div id="d-anexos-list" style="margin-top:.5rem"></div>
+      </div>
+    </div>
+    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+      <div>${isEdit?`<button class="btn btn-danger btn-sm" onclick="delDespesa('${d.id}')">Excluir</button>`:''}</div>
+      <div class="flex gap-2">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveDespesa('${d.id||''}')">Salvar</button>
+      </div>
+    </div>
+  </div>`
+}
+
+function toggleDespTipo(){
+  const t=document.getElementById('d-tipo').value
+  const isKm=t==='km'
+  document.getElementById('d-km-fields').style.display=isKm?'block':'none'
+  document.getElementById('d-valor-field').style.display=isKm?'none':'block'
+}
+
+function calcDespTotal(){
+  const qtd=parseFloat(document.getElementById('d-qtd')?.value)||0
+  const vunit=parseFloat(document.getElementById('d-vunit')?.value)||0
+  const total=qtd*vunit
+  const el=document.getElementById('d-total-km')
+  if(el) el.value=H.cur(total)
+}
+
+function saveDespesa(id){
+  const g=i=>document.getElementById(i)?.value?.trim()
+  const tipo=g('d-tipo')
+  const isKm=tipo==='km'
+  const quantidade=isKm?parseFloat(g('d-qtd'))||0:1
+  const valorUnitario=isKm?parseFloat(g('d-vunit'))||0:parseFloat(g('d-valor'))||0
+  const valorTotal=isKm?quantidade*valorUnitario:valorUnitario
+
+  if(!g('d-desc')){alert('Descrição é obrigatória.');return}
+  if(!g('d-user')){alert('Selecione o colaborador.');return}
+  if(valorTotal<=0){alert('Informe um valor válido.');return}
+  if(isKm&&quantidade<=0){alert('Informe a quantidade de KM.');return}
+
+  const data={
+    tipo,
+    data:g('d-data')||new Date().toISOString().slice(0,10),
+    oportunidadeId:g('d-op')||'',
+    userId:g('d-user'),
+    descricao:g('d-desc'),
+    quantidade,
+    valorUnitario,
+    valorTotal,
+    observacao:g('d-obs')||'',
+    anexos:JSON.parse(JSON.stringify(_despAnexos)),
+  }
+  try{
+    if(id) DB.update('despesas',id,data); else DB.insert('despesas',data)
+  }catch(e){
+    alert('Erro ao salvar: o armazenamento local pode estar cheio. Tente remover arquivos grandes ou limpe dados antigos.')
+    return
+  }
+  closeModal(); navigate('despesas')
+}
+
+function delDespesa(id){
+  if(!confirm('Excluir esta despesa?'))return
+  DB.delete('despesas',id); closeModal(); navigate('despesas')
+}
+
+// ─── Anexos de Despesas ──────────────────────────────────────────────────────
+function handleDespAnexo(files){
+  const MAX=2*1024*1024 // 2 MB
+  Array.from(files).forEach(file=>{
+    if(file.size>MAX){alert(`"${file.name}" é maior que 2 MB e não pode ser anexado.`);return}
+    const reader=new FileReader()
+    reader.onload=e=>{
+      _despAnexos.push({nome:file.name,tipo:file.type,tamanho:file.size,base64:e.target.result})
+      renderDespAnexosList()
+    }
+    reader.readAsDataURL(file)
+  })
+  // Limpar o input para permitir selecionar o mesmo arquivo novamente
+  const inp=document.getElementById('d-file-input')
+  if(inp) inp.value=''
+}
+
+function renderDespAnexosList(){
+  const wrap=document.getElementById('d-anexos-list')
+  if(!wrap)return
+  if(_despAnexos.length===0){wrap.innerHTML='';return}
+  wrap.innerHTML=`<div style="display:flex;flex-direction:column;gap:.4rem">
+    ${_despAnexos.map((a,i)=>{
+      const isImg=a.tipo&&a.tipo.startsWith('image/')
+      const isPdf=a.tipo==='application/pdf'
+      const icone=isImg?'🖼️':isPdf?'📄':a.nome.endsWith('.xlsx')||a.nome.endsWith('.xls')?'📊':a.nome.endsWith('.docx')||a.nome.endsWith('.doc')?'📝':'📎'
+      const size=a.tamanho<1024?a.tamanho+' B':a.tamanho<1048576?(a.tamanho/1024).toFixed(1)+' KB':(a.tamanho/1048576).toFixed(1)+' MB'
+      return `<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem .625rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:.5rem">
+        ${isImg
+          ? `<img src="${a.base64}" style="width:2.5rem;height:2.5rem;object-fit:cover;border-radius:.375rem;border:1px solid #e5e7eb;cursor:pointer;flex-shrink:0" onclick="verAnexo('${i}')" title="Clique para ampliar">`
+          : `<span style="font-size:1.6rem;flex-shrink:0;line-height:1">${icone}</span>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.8rem;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${H.esc(a.nome)}">${H.esc(a.nome)}</div>
+          <div style="font-size:.7rem;color:#9ca3af">${size}</div>
+        </div>
+        <button onclick="verAnexo('${i}')" title="Visualizar"
+          style="background:none;border:1px solid #bfdbfe;border-radius:.375rem;padding:.2rem .5rem;cursor:pointer;font-size:.72rem;color:#1d4ed8;flex-shrink:0">👁 Ver</button>
+        <button onclick="removeDespAnexo(${i})" title="Remover"
+          style="background:none;border:none;color:#ef4444;font-size:1rem;cursor:pointer;padding:0 .2rem;flex-shrink:0" title="Remover anexo">&times;</button>
+      </div>`
+    }).join('')}
+  </div>`
+}
+
+function verAnexo(idx){
+  const a=_despAnexos[parseInt(idx)]
+  if(!a)return
+  const w=window.open()
+  if(!w){alert('Permita popups para visualizar o arquivo.');return}
+  w.document.write(`<!DOCTYPE html><html><head><title>${H.esc(a.nome)}</title>
+    <style>body{margin:0;background:#222;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    img{max-width:98vw;max-height:98vh;border-radius:4px;box-shadow:0 4px 32px #0008}
+    iframe{width:98vw;height:98vh;border:none;border-radius:4px}</style></head><body>
+    ${a.tipo&&a.tipo.startsWith('image/')
+      ? `<img src="${a.base64}" alt="${H.esc(a.nome)}">`
+      : `<iframe src="${a.base64}"></iframe>`}
+  </body></html>`)
+  w.document.close()
+}
+
+function removeDespAnexo(idx){
+  _despAnexos.splice(idx,1)
+  renderDespAnexosList()
+}
+
+function verAnexosDespesa(id){
+  const d=DB.find('despesas',id)
+  if(!d||!d.anexos||d.anexos.length===0) return
+  // Abre o primeiro anexo — pode ser melhorado para um galeria
+  _despAnexos=JSON.parse(JSON.stringify(d.anexos))
+  verAnexo('0')
+}
+
+// Renderiza lista de anexos ao abrir o modal (hook no openModal já chama quando cat-perguntas-wrap existe)
+// Para despesas, chamamos via setTimeout após openModal
+const _origOpenModal=typeof openModal==='function'?openModal:null
 }
 </script>
 </body>
